@@ -94,7 +94,7 @@ Základní smyčka pro každou osobu:
    3. výřez: `python3 -I tools/vyrez.py pracovni/<stránka>.jpg <klíč> x0,y0,x1,y1` (zlomky 0–1 stránky; velkoryse – celý zápis s hlavičkou sloupců a okrajovými poznámkami),
    4. rámeček čteného místa: `python3 -I tools/ramecek.py <klíč> x0,y0,x1,y1` (zlomky 0–1 **výřezu** `vyrezy/<klíč>.jpg`, ne stránky) a **prohlédni si** `pracovni/ramecek_<klíč>.jpg`,
    5. přepis originálu a český překlad do `data/prepisy.json` (nejistá místa „(?)“, nečitelná „[…]“),
-   6. osobu/osoby do `data/osoby.py` (`f` fakta, `r` klíč zápisu, `st="doc"`), sourozence a kmotry-příbuzné do `SIDE`;
+   6. osobu/osoby do `data/osoby.py` (`f` fakta, `r` klíč zápisu, `st="doc"`), sourozence, jejich partnery a děti do `RODINA`, nejisté příbuzné jen jako poznámku do `SIDE`;
       klíč zápisu k existující osobě přidej `python3 -I tools/zapis.py odkaz <číslo osoby | část jména z SIDE> <klíč>`.
    Nová obec předků → `tools/mista.py pridej "Obec"` (mapa), nový pradědeček nebo prababička (8–15) → rod do `LINES`.
 6. **Zapiš hledání do deníku** `data/research_log.md` – i neúspěšné, s rozsahem (které roky / snímky jsi prošel).
@@ -219,7 +219,7 @@ připomeň uživateli, že je může poslat správci skillu:
 - Nepřepisuj data bez zálohy v gitu; po větším kroku navrhni uložení (`git add -A && git commit -m "…"`).
 
 ## Soubory projektu
-`data/`: `STAV.md` (vstupní bod), `osoby.py` (předci, `LINES`, `SIDE`, `ISSUES`, `HYPOTEZY`, `SAME`), `zaznamy.json`,
+`data/`: `STAV.md` (vstupní bod), `osoby.py` (předci, `LINES`, další osoby `RODINA` pro stromový graf `/strom/`, poznámky `SIDE`, `ISSUES`, `HYPOTEZY`, `SAME`), `zaznamy.json`,
 `svazky.json`, `prepisy.json`, `zvyrazneni.json`, `research_log.md` (deník), `udaje_od_rodiny.md`, `archivni_dotazy.md`,
 `zajimavosti.md`, `pribeh.md`, `web.json`, `dokumenty.json`, `mista.json` (formát `reference/data.md`). Dál `vyrezy/`
 a `zdroje/` (výřezy pro web / plné rozlišení), `dokumenty/` (originály od rodiny), `pracovni/` (nejde na web),

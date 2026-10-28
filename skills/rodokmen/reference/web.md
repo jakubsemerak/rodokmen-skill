@@ -2,7 +2,7 @@
 
 Web je statický (Astro + vyhledávání Pagefind), data bere z `data/` přes `tools/export_web.py`.
 Stránky: úvod (lákadlo, statistiky, zajímavosti, mapa, rody, vějíř), příběh, zajímavosti, rody, stránka rodu,
-mapa (OpenStreetMap; šipky stěhování a „Cesta předka“ obec po obci, odkaz `/mapa/?cesta=<slug>`; fotky obcí), vějíř přes celou obrazovku s hledáním, seznam předků, zápisy (s výřezem, rámečkem, přepisem
+mapa (OpenStreetMap; šipky stěhování a „Cesta předka“ obec po obci, odkaz `/mapa/?cesta=<slug>`; fotky obcí), vějíř přes celou obrazovku s hledáním, stromový graf `/strom/` (výchozí osoba a 4 generace předků, tlačítka −/+ a „Vše“, rozbalování rodičů, sourozenců a potomků z `RODINA`, ⌖ odkaz na cestu na mapě; `/strom/#f=k12` začne od předka 12, ze stránky osoby odkaz „Stromový graf od této osoby“), seznam předků, zápisy (s výřezem, rámečkem, přepisem
 a překladem), stránka osoby, rodiny, „Co hledáme“, výzkumný deník, hledání.
 
 ## Příkazy (ve složce `web/`)

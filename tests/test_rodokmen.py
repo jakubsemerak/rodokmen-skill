@@ -269,6 +269,41 @@ class Ukazka(unittest.TestCase):
         self.assertIn("ŽIJÍCÍ osoba 2", k)
         self.assertNotIn("ŽIJÍCÍ osoba 4", k)
 
+    def test_kontrola_rodina_odkazy(self):
+        self.assertNotIn("RODINA", run(self.p, "kontrola.py"))
+        self.osoby('otec="karel-hruby"', 'otec="neexistuje"')
+        self.osoby(None, append='RODINA["x"] = dict(n="Petr X", y="1900–1950", sex="M", partner=[999])\n')
+        k = run(self.p, "kontrola.py")
+        self.assertIn("CHYBA: RODINA 'jaroslav-hruby' (Jaroslav Hrubý): otec 'neexistuje' není v RODINA", k)
+        self.assertIn("RODINA 'x' (Petr X): partner 999 neexistuje", k)
+
+    def test_export_rodina(self):
+        _, s = self.export()
+        o = {x["id"]: x for x in s["others"]}
+        self.assertEqual((o["o:marie-novakova"]["father"], o["o:marie-novakova"]["mother"]), ("k16", "k17"))
+        self.assertEqual(o["o:jaroslav-hruby"]["father"], "o:karel-hruby")
+        side = {e["name"]: e["rel"] for e in s["people"]["jan-novak-1890"]["side"]}
+        self.assertEqual(side["Marie Nováková"], "sestra")
+        pub = json.loads(pathlib.Path(self.p, "web", "public", "data", "rodokmen.json").read_text(encoding="utf-8"))
+        self.assertEqual(pub["others"], s["others"])
+        db = sqlite3.connect(os.path.join(self.p, "vystupy", "rodokmen.sqlite"))
+        self.assertEqual(db.execute("SELECT otec, matka FROM rodina WHERE id = 'o:vaclav-novak-1896'").fetchone(), ("k16", "k17"))
+        db.close()
+
+    def test_rodina_soukrome_nejde_na_web(self):
+        self.osoby('note="Bratr Jana, padl', 'soukrome=["TAJNÉ-RODINA-QWE"], note="Bratr Jana, padl')
+        self.export()
+        web = pathlib.Path(self.p, "web")
+        self.assertFalse([f for f in web.rglob("*") if f.is_file() and "node_modules" not in f.parts
+                          and "TAJNÉ-RODINA-QWE" in f.read_text(encoding="utf-8", errors="ignore")])
+        db = sqlite3.connect(os.path.join(self.p, "vystupy", "rodokmen.sqlite"))
+        self.assertIn("TAJNÉ-RODINA-QWE", db.execute("SELECT soukrome FROM rodina WHERE id = 'o:vaclav-novak-1896'").fetchone()[0])
+        db.close()
+
+    def test_kontrola_zijici_rodina(self):
+        self.osoby(None, append='RODINA["eva"] = dict(n="Eva Hrubá", y="* 1950", sex="F", otec="jaroslav-hruby", f=["bydlí Lipová 3, tel. 777 123 456"])\n')
+        self.assertIn("ŽIJÍCÍ osoba RODINA eva (Eva Hrubá)", run(self.p, "kontrola.py"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -16,6 +16,7 @@
 #   soukrome  seznam soukromých údajů, které na web nikdy nejdou (adresa, nemoc, co rodina řekla důvěrně);
 #        zůstanou jen v projektu (vystupy/rodokmen.sqlite)
 #   sex  jen u osoby 1: "M" nebo "F" (u ostatních plyne z čísla)
+#   sour stav hledání sourozenců (stromový graf): "hotovo" = všichni dohledáni, "částečně"; chybí = zatím nehledáno
 # Žijící lidé: jen jméno a rok narození (soukromí), note="Žijící – údaje jen základní."
 # Neznámý otec nemanželského dítěte: dict(n="otec neuveden", st="unk", f=[], note="…")
 
@@ -27,8 +28,18 @@ P = {
 LINES = {
 }
 
-# Příbuzní mimo přímou linii (sourozenci, strýcové…): k = číslo předka, ke kterému patří.
-# dict(k=16, n="Josef Novák (1865–1920)", t="Bratr Jana. Kovář v …", r=["klic_zapisu"])
+# Osoby mimo přímou linii (stromový graf /strom/): sourozenci předků, jejich partneři a děti, předci partnerů…
+# "zkratka": dict(n="Marie Nováková", y="1892–1970", sex="F", otec=16, matka=17, st="doc", f=[...], r=[...], note="…")
+#   otec, matka  číslo přímého předka (16) nebo zkratka jiné osoby z RODINA ("karel-hruby"); chybí = neznámý.
+#                Sourozenec předka 8 má otec=16, matka=17 – i když 16/17 ještě neznáme (poznají se jako sourozenci).
+#   partner      seznam partnerů bez společného dítěte v rodokmenu, např. partner=[44] (první manželka předka 44)
+#   sex          "M" nebo "F" (povinné); n, y, st, f, r, note, soukrome jako u předků. Žijící: jen jméno a rok narození.
+RODINA = {
+}
+
+# Poznámky o příbuzných, které nejdou zapsat do RODINA (nejistý vztah, celá větev jednou větou): k = číslo předka.
+# dict(k=16, n="Josef Novák", v="bratr", y="1865–1920", t="Bratr Jana. Kovář v …", r=["klic_zapisu"])
+#   v  vztah k předkovi ("bratr", "sestra", "manžel", "manželka", "syn", "dcera", jinak volně); y roky – obojí volitelné
 SIDE = [
 ]
 
