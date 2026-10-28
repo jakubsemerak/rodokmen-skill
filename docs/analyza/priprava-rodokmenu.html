@@ -115,6 +115,13 @@ flowchart LR
 <tr><td>Zápis svazků, rámečků a míst není atomický (přerušení = poškozený JSON)</td><td>drobnost, git to zachrání</td><td><span class="st todo">zapsáno</span></td></tr>
 </tbody></table></div>
 <p><strong>Druhé kolo:</strong> celou větev (10 commitů) prošel další nezávislý agent. Bez pádů a bez chyb v escapování HTML; ověřil web v prohlížeči i okrajové případy. Našel dvě mezery v soukromí: žijící osoba jen s křtem v GEDCOM a citlivé slovo v popisu rodu. Dál nepřesnou atribuci fotek z Commons a neaktuální číslo verze. Vše opraveno ve verzi 0.5.1 a ověřeno na ukázkovém projektu i na aktualizaci projektu z verze 0.5.0.</p>
+<p><strong>Smyčka před pushem (3 kola, pokaždé nový revizor):</strong></p>
+<ol class="tight">
+<li><strong>Kolo 1:</strong> žijící příbuzný bez data narození v GEDCOM vycházel s adresou a telefonem; nová logika neměla testy. Opraveno test-first (<code>f4df594</code>), přidáno 9 testů na ukázkové rodině (<code>85de748</code>, <code>python3 -m unittest discover tests</code>).</li>
+<li><strong>Kolo 2:</strong> oprava z kola 1 schovávala údaje i mrtvým předkům bez dat. Rozhodli jste upravit: rok narození se odhadne i podle dítěte v linii (<code>17a24dd</code>).</li>
+<li><strong>Kolo 3:</strong> bez závažných nálezů, revize skončila čistě.</li>
+</ol>
+<p class="meta">Zapsané drobnosti (neopravené, nevedou k úniku): odhad z roku úmrtí dítěte a chybějící odhad podle rodičů schovají údaje víc, než je nutné; matka bez příjmení („Barbora (?)“) se páruje podle křestního jména; hláška o chybějící obci u místa bez souřadnic; velikost dat mapy u velkých rodokmenů.</p>
 
 <h2>Mapa stěhování a cesta předka</h2>
 <p>Export každé osobě určí „domov“ a ze dvojic rodič–dítě v linii spočítá šipky. Na mapě jsou oblouky v barvě rodu. Výběr předka (nebo odkaz <code>/mapa/?cesta=…</code> ze stránky osoby) ukáže jeho cestu obec po obci až k výchozí osobě, s čísly zastávek a krokováním.</p>
