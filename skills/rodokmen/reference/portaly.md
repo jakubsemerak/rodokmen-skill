@@ -202,6 +202,19 @@ A když osoba „chybí“ v očekávaných matrikách (stěhovala se se službo
 - Výstřižky jsou skvělé na web: ulož do `dokumenty/noviny/`, přes `vyrez.py` a do `dokumenty.json`.
 - Pořadí: nejdřív matriky; noviny, když chybí stopa kvůli stěhování, nebo když jde o úředníka/vojáka a chceme příběh.
 
+## Fotky – předci, obce, kostely, hroby
+- **Obce a kostely** automaticky: `python3 -I tools/foto_mista.py "Obec"` (Wikidata + Wikimedia Commons, s autorem a licencí;
+  stejnojmenné obce rozliší podle souřadnic v `mista.json`). Památkový katalog (pamatkovykatalog.cz) má fotky a historii
+  kostelů – licence fotek nejasná, dávej jen odkaz.
+- **Portréty předků** se automaticky dohledat nedají. Nejdřív rodina (alba, parte, náhrobky). Dál v prohlížeči:
+  legionáři 1914–1920 – Krev legionáře (csol.cz/krev-legionare, přes 20 tisíc portrétů) a databáze VÚA (vuapraha.cz,
+  legionáři, padlí v 1. a 2. světové válce); parte a fotky v novinách – Kramerius (jen veřejné, `kramerius.py`);
+  muzejní sbírky – eSbírky.cz. Licenci a původ fotky zapiš do popisu.
+- **Hroby**: hledání hrobů pražských hřbitovů (hpspraha.cz, s CAPTCHA – zadá uživatel), ceskehrbitovy.cz (HROBIS),
+  válečné hroby (valecnehroby.mo.gov.cz); BillionGraves a Find a Grave jen ručně v prohlížeči (automatické dotazy blokují).
+- **Historické mapy**: volné dlaždice II. a III. vojenského mapování má CENIA (gis.cenia.cz/mapcache), ale jen v souřadnicích
+  S-JTSK – do mapy webu je zatím nedáváme. Stabilní katastr prohlížej ručně na ags.cuzk.gov.cz/archiv.
+
 ## Ostatní portály – obecný postup
 Nástroje pro ně hotové nejsou. Postupuj takto a výsledek zapiš do `STAV.md`, ať to příště víš:
 1. Otevři portál v prohlížeči (Claude in Chrome / Playwright, pokud jsou k dispozici; jinak požádej uživatele).
