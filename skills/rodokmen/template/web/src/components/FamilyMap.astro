@@ -14,7 +14,13 @@ if (!compact) for (const s of Object.keys(people)) named.add(s);
 const names = {};
 for (const s of named) names[s] = [people[s].name, people[s].years, href.person(s), people[s].photo?.img ?? null];
 const events = compact ? [] : site.events ?? [];
-const payload = JSON.stringify({ places: site.places, lines, names, compact, moves: compact ? [] : site.moves ?? [], coords: site.coords ?? {}, routes, events });
+// podklad z web.json „mapa“; klíč Mapy.com je na webu veřejný (omezit na doménu webu v účtu Mapy.com)
+const podklad = site.config?.mapa?.podklad ?? 'osm', klic = site.config?.mapa?.klic ?? '';
+const tiles = /^mapy\.cz/.test(podklad) && klic
+  ? { url: `https://api.mapy.com/v1/maptiles/${podklad === 'mapy.cz-outdoor' ? 'outdoor' : 'basic'}/256/{z}/{x}/{y}?apikey=${encodeURIComponent(klic)}`,
+      attribution: '<a href="https://api.mapy.com/copyright" target="_blank">&copy; Seznam.cz a.s. a další</a>', maxZoom: 19, logo: true }
+  : { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 18, logo: false };
+const payload = JSON.stringify({ places: site.places, lines, names, compact, moves: compact ? [] : site.moves ?? [], coords: site.coords ?? {}, routes, events, tiles });
 ---
 <div class="fmap" style={`height:${height}`} data-map={payload}></div>
 {events.length > 0 && (
@@ -86,7 +92,7 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
   }
 
   for (const el of document.querySelectorAll<HTMLElement>('.fmap')) {
-    const { places, lines, names, compact, moves, coords, routes, events } = JSON.parse(el.dataset.map!);
+    const { places, lines, names, compact, moves, coords, routes, events, tiles } = JSON.parse(el.dataset.map!);
     // Gesture handling: page scroll stays page scroll. Zoom with Ctrl/⌘ + wheel (or trackpad pinch),
     // on touch devices move the map with two fingers; otherwise show a short hint.
     const touch = window.matchMedia('(pointer: coarse)').matches;
@@ -107,10 +113,21 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
       el.addEventListener('touchmove', (e) => { if (e.touches.length === 1) showHint(); }, { passive: true });
       el.addEventListener('touchend', () => map.dragging.disable(), { passive: true });
     }
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
+    L.tileLayer(tiles.url, { maxZoom: tiles.maxZoom, attribution: tiles.attribution }).addTo(map);
+    if (tiles.logo) {
+      const Logo = L.Control.extend({
+        onAdd() {
+          const a = L.DomUtil.create('a', 'fmap-logo');
+          a.href = 'http://mapy.com/';
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.innerHTML = '<img src="https://api.mapy.com/img/api/logo.svg" alt="Mapy.com" width="100">';
+          L.DomEvent.disableClickPropagation(a);
+          return a;
+        },
+      });
+      new Logo({ position: 'bottomleft' }).addTo(map);
+    }
     map.createPane('moves').style.zIndex = '350';   // šipky pod tečkami obcí
     map.createPane('route').style.zIndex = '450';   // vybraná cesta nad nimi
     const movesRenderer = L.svg({ pane: 'moves' }), routeRenderer = L.svg({ pane: 'route' });
@@ -346,6 +363,7 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
   .fmap.routing .leaflet-overlay-pane path, .fmap.routing .leaflet-moves-pane path { opacity: 0.25; }
   .fmap-stop span { position: absolute; transform: translate(-50%, -50%); background: #3b2e22; color: #fff; border-radius: 1rem;
     padding: 0.1rem 0.45rem; font: 700 0.8rem system-ui, sans-serif; white-space: nowrap; box-shadow: 0 0 0 2px #fff; }
+  .fmap-logo img { display: block; width: 100px; height: auto; }
   .fmap-time { margin: 0.6rem 0; font-size: 0.9rem; }
   .fmap-time-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; }
   .fmap-time-ctl input[type=range] { width: min(18rem, 60vw); vertical-align: middle; }
