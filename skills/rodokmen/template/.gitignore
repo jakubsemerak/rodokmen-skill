@@ -15,8 +15,10 @@ web/src/generated/
 web/public/img/
 web/public/zdroje/
 web/public/prihlaseni.html
+web/public/data/
 web/nginx.conf
 web/netlify/edge-functions/
 web/cloudflare/worker.js
 web/wrangler.jsonc
 web/.wrangler/
+vystupy/rodokmen.sqlite

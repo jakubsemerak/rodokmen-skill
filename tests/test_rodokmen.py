@@ -1,5 +1,5 @@
 """Testy nástrojů skillu na ukázkové rodině. Spuštění z kořene repozitáře: python3 -m unittest discover tests"""
-import json, os, pathlib, shutil, subprocess, sys, tempfile, unittest
+import json, os, pathlib, shutil, sqlite3, subprocess, sys, tempfile, unittest
 
 SKILL = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "skills", "rodokmen")
 
@@ -148,6 +148,22 @@ class Ukazka(unittest.TestCase):
         self.assertEqual(len(wed), 1)
         self.assertEqual((wed[0]["people"], wed[0]["place"]), (["vaclav-novak-1858", "barbora-mala-1862"], "Holice"))
         self.assertTrue(any(e["kind"] == "stehovani" and e["src"] == "Ostřetín" and e["place"] == "Holice" for e in ev))
+
+    def test_databaze_json_a_sqlite(self):
+        _, s = self.export()
+        pub = json.loads(pathlib.Path(self.p, "web", "public", "data", "rodokmen.json").read_text(encoding="utf-8"))
+        self.assertEqual(pub["people"], s["people"])
+        self.assertEqual(len(pub["events"]), len(s["events"]))
+        db = sqlite3.connect(os.path.join(self.p, "vystupy", "rodokmen.sqlite"))
+        self.assertEqual(db.execute("SELECT jmeno FROM osoby WHERE k = 17").fetchone(), ("Barbora Malá",))
+        self.assertEqual(db.execute("SELECT count(*) FROM udalosti").fetchone()[0], len(s["events"]))
+        rows = db.execute("SELECT u.rok FROM udalosti u, json_each(u.osoby) j WHERE j.value = 'barbora-mala-1862' AND u.druh <> 'stehovani'").fetchall()
+        self.assertEqual(sorted(r[0] for r in rows), [1862, 1884, 1930])
+        db.close()
+        self.export()   # znovu vytvořit, ne přidat
+        db = sqlite3.connect(os.path.join(self.p, "vystupy", "rodokmen.sqlite"))
+        self.assertEqual(db.execute("SELECT count(*) FROM udalosti").fetchone()[0], len(s["events"]))
+        db.close()
 
     def test_domov_z_volneho_textu_kdyz_narozeni_bez_obce(self):
         self.osoby("'f': ['* 1862 Ostřetín čp. 23',", "'f': ['* 1862', 'bydlela v Býšti',")
