@@ -25,6 +25,8 @@ LINE_COLORS = {8: "#EFB45F", 9: "#F09A78", 10: "#E58AA6", 11: "#B99AE0",
                12: "#86B8E8", 13: "#6FCBB9", 14: "#9CD17A", 15: "#D3D46A"}
 STATUS = {"doc": "doloženo matrikou", "prob": "pravděpodobné", "fam": "údaj od rodiny",
           "mh": "jen z cizího rodokmenu", "unk": "neznámé"}
+SIDE_KIND = {"bratr": "sib", "sestra": "sib", "manžel": "spouse", "manželka": "spouse", "syn": "child", "dcera": "child"}
+SIB_STATUS = {"hotovo": "done", "částečně": "partial"}
 KINDS = {"N": "křest / narození", "O": "sňatek", "Z": "úmrtí", "I": "rejstřík", "S": "sčítání lidu", "J": "jiný pramen"}
 
 
@@ -39,7 +41,7 @@ def jload(name, default):
 def load_people():
     ns = {}
     exec(open(os.path.join(DATA, "osoby.py"), encoding="utf-8").read(), ns)
-    for name, default in (("P", {}), ("SIDE", []), ("LINES", {}), ("ISSUES", []), ("HYPOTEZY", []), ("SAME", {})):
+    for name, default in (("P", {}), ("SIDE", []), ("LINES", {}), ("ISSUES", []), ("HYPOTEZY", []), ("SAME", {}), ("RODINA", {})):
         ns.setdefault(name, default)
     return ns
 
@@ -188,7 +190,7 @@ def login_files(cfg):
     return bool(answer)
 
 
-def write_db(P, slugs, people, families, events, moves):
+def write_db(P, slugs, people, families, events, moves, R, others):
     """Celá data i se soukromými poznámkami pro dotazy (agent, rodina) – vystupy/ se nikam nenasazuje."""
     path = os.path.join(ROOT, "vystupy", "rodokmen.sqlite")
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -198,6 +200,8 @@ def write_db(P, slugs, people, families, events, moves):
     db.executescript("""
 CREATE TABLE osoby (k INTEGER PRIMARY KEY, slug TEXT, jmeno TEXT, roky TEXT, stav TEXT, generace INTEGER, pohlavi TEXT,
   rod INTEGER, domov TEXT, otec INTEGER, matka INTEGER, zapisy TEXT, poznamka TEXT, soukrome TEXT);
+CREATE TABLE rodina (id TEXT PRIMARY KEY, jmeno TEXT, roky TEXT, stav TEXT, pohlavi TEXT, otec TEXT, matka TEXT, partneri TEXT,
+  zapisy TEXT, fakta TEXT, poznamka TEXT, soukrome TEXT);
 CREATE TABLE fakta (osoba INTEGER, poradi INTEGER, druh TEXT, rok INTEGER, text TEXT);
 CREATE TABLE udalosti (rok INTEGER, datum TEXT, druh TEXT, misto TEXT, odkud TEXT, popis TEXT, osoby TEXT);
 CREATE TABLE rodiny (id TEXT PRIMARY KEY, otec TEXT, matka TEXT, deti TEXT, snatek TEXT, rod INTEGER, generace INTEGER);
@@ -221,6 +225,11 @@ CREATE TABLE stehovani (odkud TEXT, kam TEXT, rod INTEGER, rok INTEGER, osoby TE
         for i, f in enumerate(p.get("f", [])):
             y = re.search(r"\b(1[4-9]\d\d|20\d\d)\b", f)
             db.execute("INSERT INTO fakta VALUES (?,?,?,?,?)", (k, i, f[:1] if f[:1] in "*×†" else "", int(y.group()) if y else None, f))
+    for o in others:
+        soukr = R[o["id"][2:]].get("soukrome") or []
+        db.execute("INSERT INTO rodina VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (
+            o["id"], o["name"], o["y"], o["st"], o["sex"], o["father"], o["mother"], js(o["partners"]), js(R[o["id"][2:]].get("r", [])),
+            js(o["facts"]), o["note"], js(soukr if isinstance(soukr, list) else [soukr])))
     db.executemany("INSERT INTO udalosti VALUES (?,?,?,?,?,?,?)",
                    [(e["year"], e["date"], e["kind"], e["place"], e.get("src"), e["label"], js(e["people"])) for e in events])
     db.executemany("INSERT INTO rodiny VALUES (?,?,?,?,?,?,?)",
@@ -305,7 +314,9 @@ def main():
             fatherUnknown=(2 * k in P and placeholder(P[2 * k])), motherUnknown=(2 * k + 1 in P and placeholder(P[2 * k + 1])),
             child=slugs.get(k // 2) if k > 1 else None, spouse=slugs.get(k ^ 1) if k > 1 else None,
             family=None, ownFamily=None, path=path,
-            side=[dict(name=s["n"], text=s["t"], records=[r for r in s.get("r", []) if r in recs]) for s in SIDE if s["k"] == k],
+            side=[dict(name=s["n"], text=s["t"], records=[r for r in s.get("r", []) if r in recs], rel=s.get("v") or "příbuzný",
+                       years=years(s.get("y")), kind=SIDE_KIND.get((s.get("v") or "").lower(), "other")) for s in SIDE if s["k"] == k],
+            sibStatus=SIB_STATUS.get(p.get("sour"), "none"),
             docs=[dict(img=d["img"], caption=d["popis"]) for d in docs_cfg if k in d.get("osoby", [])],
             photo=next((dict(img=d["img"], caption=d["popis"]) for d in docs_cfg if d.get("portret") and k in d.get("osoby", [])
                         and os.path.exists(os.path.join(VYREZY, d["img"] + ".jpg"))), None),
@@ -316,6 +327,37 @@ def main():
             for a in aliases_of[k]:
                 people[slugs[k]]["records"] = list(dict.fromkeys(people[slugs[k]]["records"] + [r for r in P.get(a, {}).get("r", []) if r in recs]))
             people[slugs[k]]["facts"] = [f for f in people[slugs[k]]["facts"] if not f.startswith("TÁŽ OSOBA")]
+
+    # RODINA: osoby mimo přímou linii. Odkazy: "k12" přímý předek, "o:zkratka" osoba z RODINA, "?12" neznámý předek na místě 12.
+    R = {oid: o for oid, o in ns["RODINA"].items() if isinstance(o, dict) and o.get("n")}
+
+    def ref(v):
+        if isinstance(v, int) and not isinstance(v, bool):
+            v = SAME.get(v, v)
+            return f"k{v}" if v in slugs else f"?{v}"
+        return f"o:{v}" if isinstance(v, str) and v in R else None
+
+    others = [dict(id=f"o:{oid}", name=o["n"], y=o.get("y", ""), years=years(o.get("y")), sex=o.get("sex", ""),
+                   st=o.get("st", "fam"), status=STATUS.get(o.get("st", "fam"), ""), father=ref(o.get("otec")), mother=ref(o.get("matka")),
+                   partners=[x for x in map(ref, o.get("partner", [])) if x], facts=o.get("f", []), note=o.get("note", ""),
+                   records=[r for r in o.get("r", []) if r in recs]) for oid, o in R.items()]
+    for pp in people.values():   # na stránce osoby a rodiny jako příbuzní
+        me, k = f"k{pp['k']}", pp["k"]
+        birth = (ref(2 * k), ref(2 * k + 1))
+        for o in others:
+            par = (o["father"], o["mother"])
+            if par == birth:
+                rel = "bratr" if o["sex"] == "M" else "sestra"
+            elif me in par:
+                rel = "syn" if o["sex"] == "M" else "dcera"
+            elif me in o["partners"] or any(me in (c["father"], c["mother"]) and o["id"] in (c["father"], c["mother"]) for c in others):
+                rel = "manžel" if o["sex"] == "M" else "manželka"
+            elif any(b and not b.startswith("?") and b in par for b in birth):
+                rel = "nevlastní bratr" if o["sex"] == "M" else "nevlastní sestra"
+            else:
+                continue
+            pp["side"].append(dict(name=o["name"], text=o["note"] or "; ".join(o["facts"]), records=o["records"], rel=rel,
+                                   years=o["years"], kind=SIDE_KIND.get(rel, "other"), id=o["id"]))
 
     def surname(k):   # bez „(?)“; prázdné jméno → ""
         w = re.sub(r"\([^)]*\)|\?", " ", P.get(k, {}).get("n", "")).split()
@@ -469,15 +511,15 @@ def main():
     public_cfg = {k: v for k, v in cfg.items() if k != "prihlaseni"}
     public_cfg["maPribeh"] = has_story
     site = dict(config=public_cfg, places=places, moves=moves, events=events, coords=coords, root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
-                families=families, records=records, lines=lines,
+                families=families, others=others, records=records, lines=lines,
                 issues=[dict(title=i, text="") if isinstance(i, str) else dict(title=i[0], text=i[1]) for i in ISSUES], stats=stats, hypotheses=hypotheses,
                 docs=[dict(img=d["img"], caption=d["popis"], people=[slugs[k] for k in d.get("osoby", []) if k in slugs])
                       for d in docs_cfg if os.path.exists(os.path.join(VYREZY, d["img"] + ".jpg"))])
 
     write(os.path.join(WEB, "src", "data", "site.json"), json.dumps(site, ensure_ascii=False, indent=1))
     write(os.path.join(WEB, "public", "data", "rodokmen.json"), json.dumps(
-        {k: site[k] for k in ("people", "families", "events", "records", "places", "moves", "lines", "root")}, ensure_ascii=False))
-    write_db(P, slugs, people, families, events, moves)
+        {k: site[k] for k in ("people", "families", "others", "events", "records", "places", "moves", "lines", "root")}, ensure_ascii=False))
+    write_db(P, slugs, people, families, events, moves, R, others)
     gen_dir = os.path.join(WEB, "src", "generated")
     for src, dst in (("archivni_dotazy.md", "dotazy.md"), ("research_log.md", "denik.md"), ("zajimavosti.md", "zajimavosti.md")):
         path = os.path.join(DATA, src)

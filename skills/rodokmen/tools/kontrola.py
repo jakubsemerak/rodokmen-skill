@@ -57,6 +57,31 @@ def main():
         for r in s.get("r", []):
             if r not in keys:
                 err.append(f"boční příbuzný '{s.get('n')}' cituje neexistující zápis '{r}'")
+    R = ns.get("RODINA", {})
+    odkazy = {v for o in R.values() for v in [o.get("otec"), o.get("matka"), *o.get("partner", [])] if isinstance(v, str)}
+    for oid, o in R.items():
+        kde = f"RODINA '{oid}' ({o.get('n')})"
+        if not isinstance(o, dict) or not o.get("n"):
+            err.append(f"{kde}: musí být dict(n=\"jméno\", …)")
+            continue
+        if o.get("sex") not in ("M", "F"):
+            err.append(f"{kde}: chybí sex=\"M\" nebo \"F\"")
+        if o.get("st", "fam") not in ("doc", "prob", "fam", "mh", "unk"):
+            err.append(f"{kde}: neznámý stav '{o.get('st')}'")
+        for pole in ("otec", "matka"):
+            v = o.get(pole)
+            if isinstance(v, str) and v not in R or v is not None and not isinstance(v, (str, int)):
+                err.append(f"{kde}: {pole} {v!r} není v RODINA")
+            elif isinstance(v, int) and v < 2:
+                err.append(f"{kde}: {pole} {v} – číslo předka musí být aspoň 2")
+        for v in o.get("partner", []):
+            if isinstance(v, str) and v not in R or isinstance(v, int) and v not in P and v not in SAME or not isinstance(v, (str, int)):
+                err.append(f"{kde}: partner {v!r} neexistuje")
+        if not (o.get("otec") or o.get("matka") or o.get("partner")) and oid not in odkazy:
+            err.append(f"{kde}: není s nikým spojen (chybí otec, matka i partner)")
+        for r in o.get("r", []):
+            if r not in keys:
+                err.append(f"{kde} cituje neexistující zápis '{r}'")
     for a, c in SAME.items():
         seen = {a}
         while c in SAME and c not in seen:
@@ -74,7 +99,7 @@ def main():
         if k not in range(8, 16):
             err.append(f"LINES: rod {k} – rody mají čísla 8 až 15 (pradědečci a prababičky)")
 
-    cited = {r for p in P.values() for r in p.get("r", [])} | {r for s in SIDE for r in s.get("r", [])}
+    cited = {r for p in list(P.values()) + [o for o in R.values() if isinstance(o, dict)] for r in p.get("r", [])} | {r for s in SIDE for r in s.get("r", [])}
     for z in zaz:
         k = z.get("klic", "?")
         for f in ("klic", "druh", "datum", "nazev", "shrnuti"):
@@ -169,6 +194,8 @@ def main():
         roky = [int(y) for y in re.findall(r"\b1[5-9]\d\d|20\d\d\b", p.get("y", "") + " " + text)]
         texty.append((f"osoba {k}", text + (f" {hranice}" if roky and min(roky) >= 1870 or k < 8 else "")))
     texty += [(f"boční příbuzný {s.get('n')}", s.get("n", "") + " " + s.get("t", "")) for s in SIDE]
+    texty += [(f"RODINA {oid}", " ".join([o.get("n", ""), o.get("y", ""), *o.get("f", []), o.get("note", "")]))
+              for oid, o in R.items() if isinstance(o, dict)]
     texty += [("HYPOTEZY", " ".join(strings(h))) for h in ns.get("HYPOTEZY", [])]
     texty += [(f"LINES {k}", " ".join(strings(v))) for k, v in LINES.items()]
     texty += [("web.json", t) for kk, v in cfg.items() if kk not in ("prihlaseni", "citlive_schvaleno", "mapa") for t in strings(v)]
@@ -182,7 +209,7 @@ def main():
             md = re.sub(r"<!--.*?-->", "", md, flags=re.S)
             texty += [(f, odst) for odst in re.split(r"\n\s*\n|\n(?=\|)", md)]
     soukrome = {}
-    for k, p in P.items():
+    for k, p in [*P.items(), *((f"RODINA {oid}", o) for oid, o in R.items())]:
         s = p.get("soukrome") or [] if isinstance(p, dict) else []
         for t in [s] if isinstance(s, str) else s:
             if isinstance(t, str) and len(t.strip()) >= 4:
@@ -200,13 +227,13 @@ def main():
                         f"zeptej se uživatele, jestli to tam smí být (reference/soukromi.md); když ano, "
                         f"přidej úryvek textu s tím slovem do web.json „citlive_schvaleno“")
 
-    # Žijící lidé: na webu jen jméno a rok narození. Hlídá jen osoby v P (ne boční příbuzné ani volný text).
+    # Žijící lidé: na webu jen jméno a rok narození. Hlídá osoby v P a RODINA (ne boční příbuzné ani volný text).
     osobni = re.compile(r"\b\d{1,2}\.\s*\d{1,2}\.\s*\d{4}|\bč\.\s?p\.|\bčp\.|\b[A-ZÁ-Ž]\w*(?:ská|cká|ova|ní|ého) \d{1,3}(?:/\d+)?[a-z]?\b(?![.\d])|\bul\.|"
                         r"\+\d{3}\s?\d{3}\s?\d{3}\s?\d{3}|\b[2-79]\d{2} \d{3} \d{3}\b|[\w.+-]+@[\w-]+\.\w+|\btel\.")
-    for k, p in P.items():
+    for k, p in [*P.items(), *((f"RODINA {oid}", o) for oid, o in R.items() if isinstance(o, dict))]:
         yv, note = (p.get("y") or "").strip(), p.get("note") or ""
         rok = re.search(r"\d{4}", yv)
-        if not ("žijící" in note.lower() or yv.startswith("*") and rok and int(rok.group()) > hranice):
+        if not ("žijící" in note.lower() or (yv.startswith("*") or re.fullmatch(r"\d{4}\s*[–-]?", yv)) and rok and int(rok.group()) > hranice):
             continue
         m = osobni.search(" ".join(p.get("f", [])) + " | " + note)
         if m:

@@ -36,7 +36,17 @@ P = {
   co rodina řekla důvěrně): `soukrome=["bydlí Masarykova 12", "léčil se v Kosmonosích"]`. Export je nepublikuje, najdeš je
   jen v `vystupy/rodokmen.sqlite`; `kontrola.py` upozorní, když se stejný text objeví v něčem, co jde na web.
 - `LINES = {8: ("Novákové", "Kováři z Holic…"), …}` – jen čísla 8–15; název rodu = příjmení v množném čísle.
-- `SIDE` – sourozenci a další příbuzní: `dict(k=<číslo předka>, n="Josef Novák (1865–1920)", t="text", r=[klíče])`.
+- `RODINA` – osoby mimo přímou linii (sourozenci předků, jejich partneři a děti, předci partnerů):
+  `"zkratka": dict(n="Marie Nováková", y="1892–1970", sex="F", otec=16, matka=17, partner=[...], st="doc", f=[...], r=[...], note="…")`.
+  `otec`/`matka` = číslo přímého předka nebo zkratka jiné osoby z RODINA; sourozenec předka 8 má `otec=16, matka=17`,
+  i když 16/17 ještě neznáme. `partner` jen pro partnery bez společného dítěte. `soukrome` jako u předků (na web nejde).
+  Stromový graf (`/strom/`) z nich skládá rozklikávací větve; na stránce osoby a rodiny se ukážou jako příbuzní.
+  Žijící jen jménem a rokem narození – `kontrola.py` hlídá RODINA stejně jako `P`. U předka v `P` lze zapsat
+  `sour="hotovo"` / `"částečně"` (stav hledání sourozenců).
+- `SIDE` – jen poznámky, které do RODINA nejdou (nejistý vztah, kmotr „asi příbuzný“, celá větev jednou větou):
+  `dict(k=<číslo předka>, n="Josef Novák", v="bratr", y="1865–1920", t="text", r=[klíče])` – ve stromu jako „pozn.“ u předka.
+  **RODINA, nebo SIDE?** Víš-li, kdo jsou rodiče nebo partner (aspoň „sourozenec předka 8“), patří osoba do RODINA;
+  jen tušená souvislost bez jistého vztahu do SIDE.
 - `ISSUES` – dvojice `("Otázka", "Vyřešeno: … / Hypotéza: … / Otevřené: …")` → stránka „Co hledáme“ (vyřešené se skryjí).
   Jde na web – nepiš sem citlivé věci (příčiny úmrtí, rodinné spory) bez souhlasu.
 - `HYPOTEZY` – `dict(rod=8, nadpis="…", text="…", polozky=[("jméno", "text")], zaznamy=[klíče])` → stránka rodu.
@@ -111,7 +121,7 @@ Viz `web.md`.
 
 ## Databáze pro dotazy (`vystupy/rodokmen.sqlite`, `web/public/data/rodokmen.json`)
 Každý export (`npm run data`) je vyrobí znovu – ručně je neupravuj, zdrojem jsou soubory v `data/`.
-- `web/public/data/rodokmen.json` – veřejná data webu (`people`, `families`, `events`, `records`, `places`, `moves`,
+- `web/public/data/rodokmen.json` – veřejná data webu (`people`, `families`, `others` = RODINA bez `soukrome`, `events`, `records`, `places`, `moves`,
   `lines`, `root`) pro skripty v prohlížeči a agenty; soukromí stejné jako web (za přihlášením).
 - `vystupy/rodokmen.sqlite` – **jen v projektu, nenasazuje se a je v `.gitignore`**: všechny osoby z `osoby.py`
   včetně soukromých údajů (`soukrome`). Seznamy jsou JSON text (dotaz přes `json_each`).
@@ -119,6 +129,7 @@ Každý export (`npm run data`) je vyrobí znovu – ručně je neupravuj, zdroj
 | tabulka | sloupce |
 |---|---|
 | `osoby` | `k` (Kekulé), `slug`, `jmeno`, `roky`, `stav`, `generace`, `pohlavi`, `rod`, `domov`, `otec`, `matka` (čísla), `zapisy`, `poznamka`, `soukrome` |
+| `rodina` | `id` (`o:zkratka`), `jmeno`, `roky`, `stav`, `pohlavi`, `otec`, `matka` (`k16` předek, `o:zkratka`, `?16` neznámý předek), `partneri`, `zapisy`, `fakta`, `poznamka`, `soukrome` |
 | `fakta` | `osoba`, `poradi`, `druh` (`*`/`×`/`†`/prázdné), `rok`, `text` |
 | `udalosti` | `rok`, `datum`, `druh` (`narozeni`/`snatek`/`umrti`/`stehovani`), `misto`, `odkud`, `popis`, `osoby` (slugy) |
 | `rodiny` | `id`, `otec`, `matka`, `deti`, `snatek`, `rod`, `generace` |
