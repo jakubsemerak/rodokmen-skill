@@ -13,9 +13,20 @@ const named = new Set(site.places.flatMap((pl) => pl.lines.flatMap((l) => l.peop
 if (!compact) for (const s of Object.keys(people)) named.add(s);
 const names = {};
 for (const s of named) names[s] = [people[s].name, people[s].years, href.person(s), people[s].photo?.img ?? null];
-const payload = JSON.stringify({ places: site.places, lines, names, compact, moves: compact ? [] : site.moves ?? [], coords: site.coords ?? {}, routes });
+const events = compact ? [] : site.events ?? [];
+const payload = JSON.stringify({ places: site.places, lines, names, compact, moves: compact ? [] : site.moves ?? [], coords: site.coords ?? {}, routes, events });
 ---
 <div class="fmap" style={`height:${height}`} data-map={payload}></div>
+{events.length > 0 && (
+  <div class="fmap-time">
+    <div class="fmap-time-ctl">
+      <button type="button" data-play aria-label="Přehrát roky">▶</button>
+      <label>Mapa do roku <input type="range" data-year /> <output></output></label>
+      <span class="fmap-time-key"><i class="k-narozeni">*</i> narození <i class="k-snatek">×</i> sňatek <i class="k-umrti">†</i> úmrtí <i class="k-stehovani">➝</i> stěhování</span>
+    </div>
+    <div class="fmap-time-scroll"><div class="fmap-time-track"></div></div>
+  </div>
+)}
 {!compact && (
   <div class="fmap-legend">
     {Object.entries(lines).filter(([k]) => k !== '0').map(([k, l]) => (
@@ -75,7 +86,7 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
   }
 
   for (const el of document.querySelectorAll<HTMLElement>('.fmap')) {
-    const { places, lines, names, compact, moves, coords, routes } = JSON.parse(el.dataset.map!);
+    const { places, lines, names, compact, moves, coords, routes, events } = JSON.parse(el.dataset.map!);
     // Gesture handling: page scroll stays page scroll. Zoom with Ctrl/⌘ + wheel (or trackpad pinch),
     // on touch devices move the map with two fingers; otherwise show a short hint.
     const touch = window.matchMedia('(pointer: coarse)').matches;
@@ -114,8 +125,12 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
         : '';
     const placeByName = Object.fromEntries(places.map((pl: { name: string }) => [pl.name, pl]));
 
-    const dotGroups: Record<string, L.LayerGroup> = {};
-    const moveGroups: Record<string, L.LayerGroup> = {};
+    // první rok, kdy je místo nebo stěhování na mapě (pro časovou osu); bez roku vždy
+    const firstYear: Record<string, number> = {};
+    for (const ev of events) if (ev.place && !(firstYear[ev.place] <= ev.year)) firstYear[ev.place] = ev.year;
+    for (const pl of places) if (pl.years && !(firstYear[pl.name] <= pl.years[0])) firstYear[pl.name] = pl.years[0];
+    const dots: { k: string; yr: number; layer: L.CircleMarker; place: string }[] = [];
+    const arrows: { k: string; yr: number; layer: L.Polyline }[] = [];
     for (const mv of moves) {
       const a = coords[mv.src], b = coords[mv.dst];
       if (!a || !b) continue;
@@ -124,7 +139,7 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
       poly.bindTooltip(`${esc(mv.src)} → ${esc(mv.dst)} · ${esc(line.name)} (${mv.people.length})`, { sticky: true });
       poly.bindPopup(`<strong>${esc(mv.src)} → ${esc(mv.dst)}</strong><br>${mv.people.map(person).join('<br>')}`, { maxHeight: 260 });
       poly.on('add', () => arrowHead(poly.getElement() as SVGElement, line.color));
-      (moveGroups[mv.line] ??= L.layerGroup()).addLayer(poly);
+      arrows.push({ k: String(mv.line), yr: mv.year ?? -Infinity, layer: poly });
     }
 
     const bounds: L.LatLngExpression[] = [];
@@ -154,7 +169,7 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
           { maxHeight: 320 }
         );
         marker.bindTooltip(`${esc(pl.name)} · ${esc(line.name)}${count ? ` (${count})` : ''}`);
-        (dotGroups[ln.k] ??= L.layerGroup()).addLayer(marker);
+        dots.push({ k: String(ln.k), yr: firstYear[pl.name] ?? -Infinity, layer: marker, place: pl.name });
         bounds.push(pos);
       });
     }
@@ -163,12 +178,98 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
 
     const shown: Record<string, boolean> = Object.fromEntries(Object.keys(lines).map((k) => [k, true]));
     let movesOn = !compact;
+    let upTo = Infinity;
+    const toggle = (layer: L.Layer, on: boolean) => (on ? map.hasLayer(layer) || layer.addTo(map) : layer.remove());
     const refresh = () => {
-      for (const [k, g] of Object.entries(dotGroups)) shown[k] !== false ? g.addTo(map) : g.remove();
-      for (const [k, g] of Object.entries(moveGroups)) movesOn && shown[k] !== false ? g.addTo(map) : g.remove();
+      for (const d of dots) toggle(d.layer, shown[d.k] !== false && d.yr <= upTo);
+      for (const a of arrows) toggle(a.layer, movesOn && shown[a.k] !== false && a.yr <= upTo);
     };
     refresh();
     const box = el.parentElement!;
+    const time = el.nextElementSibling?.classList.contains('fmap-time') ? (el.nextElementSibling as HTMLElement) : null;
+    if (time && events.length) {
+      const y0 = Math.floor(events[0].year / 10) * 10, y1 = events[events.length - 1].year;
+      const px = Math.max(6, Math.min(24, 900 / Math.max(1, y1 - y0)));
+      const track = time.querySelector<HTMLElement>('.fmap-time-track')!;
+      const scroller = time.querySelector<HTMLElement>('.fmap-time-scroll')!;
+      const range = time.querySelector<HTMLInputElement>('[data-year]')!;
+      const out = time.querySelector('output')!;
+      const play = time.querySelector<HTMLButtonElement>('[data-play]')!;
+      track.style.width = `${(y1 - y0 + 2) * px + 16}px`;
+      const x = (y: number) => 8 + (y - y0) * px;
+      const step = y1 - y0 > 200 ? 50 : y1 - y0 > 80 ? 20 : 10;
+      for (let y = y0; y <= y1; y += step) {
+        const t = document.createElement('span');
+        t.className = 'tick';
+        t.style.left = `${x(y)}px`;
+        t.textContent = String(y);
+        track.appendChild(t);
+      }
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      track.appendChild(cursor);
+      const rows = ['narozeni', 'snatek', 'stehovani', 'umrti'];
+      const stack: Record<string, number> = {};
+      const sign: Record<string, string> = { narozeni: '*', snatek: '×', umrti: '†', stehovani: '➝' };
+      let marked: L.CircleMarker[] = [];
+      const unmark = () => { marked.forEach((m) => m.setStyle({ weight: 1, color: '#3b2e22' })); marked = []; };
+      const mark = (ev: { place: string | null }) => {
+        unmark();
+        marked = dots.filter((d) => d.place === ev.place && map.hasLayer(d.layer)).map((d) => d.layer);
+        marked.forEach((m) => { m.setStyle({ weight: 4, color: '#d7302a' }); m.bringToFront(); });
+      };
+      const popup = (ev: { year: number; date: string; kind: string; people: string[]; place: string | null; src?: string; label: string }) => {
+        const where = ev.place && coords[ev.place];
+        const html = `<strong>${esc(ev.label)}</strong> <span class="y">${esc(ev.date || ev.year)}</span>` +
+          (ev.place ? `<br>${esc(ev.place)}` : '') + `<br>${ev.people.filter((s) => names[s]).map(person).join('<br>')}`;
+        if (where) {
+          map.flyTo(where, Math.max(map.getZoom(), 10), { duration: 0.6 });
+          L.popup({ maxHeight: 320 }).setLatLng(where).setContent(html).openOn(map);
+        } else L.popup({ maxHeight: 320 }).setLatLng(map.getCenter()).setContent(html).openOn(map);
+      };
+      for (const ev of events) {
+        const key = `${ev.year}-${ev.kind}`;
+        const n = (stack[key] = (stack[key] ?? -1) + 1);
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = `ev k-${ev.kind}`;
+        b.style.left = `${x(ev.year) + (n % 3) * 3}px`;
+        b.style.top = `${4 + rows.indexOf(ev.kind) * 14 + Math.min(n, 2) * 2}px`;
+        b.textContent = sign[ev.kind] ?? '•';
+        b.title = `${ev.date || ev.year} ${ev.label}${ev.place ? ` – ${ev.place}` : ''}`;
+        b.setAttribute('aria-label', b.title);
+        b.addEventListener('mouseenter', () => mark(ev));
+        b.addEventListener('focus', () => mark(ev));
+        b.addEventListener('mouseleave', unmark);
+        b.addEventListener('click', () => { mark(ev); popup(ev); });
+        track.appendChild(b);
+      }
+      range.min = String(y0);
+      range.max = String(y1);
+      range.value = String(y1);
+      const setYear = (y: number) => {
+        range.value = String(y);
+        out.textContent = String(y);
+        upTo = y >= y1 ? Infinity : y;
+        cursor.style.left = `${x(y)}px`;
+        refresh();
+      };
+      setYear(y1);
+      range.addEventListener('input', () => { stop(); setYear(Number(range.value)); });
+      let timer = 0;
+      const stop = () => { clearInterval(timer); timer = 0; play.textContent = '▶'; play.setAttribute('aria-label', 'Přehrát roky'); };
+      play.addEventListener('click', () => {
+        if (timer) return stop();
+        let y = Number(range.value) >= y1 ? y0 : Number(range.value);
+        play.textContent = '❚❚';
+        play.setAttribute('aria-label', 'Zastavit');
+        timer = window.setInterval(() => {
+          setYear(y);
+          scroller.scrollLeft = x(y) - scroller.clientWidth / 2;
+          if (++y > y1) stop();
+        }, Math.max(40, 6000 / (y1 - y0 + 1)));
+      });
+    }
     box.querySelectorAll<HTMLInputElement>('.fmap-legend input').forEach((cb) =>
       cb.addEventListener('change', () => {
         if (cb.dataset.line !== undefined) shown[cb.dataset.line] = cb.checked;
@@ -245,6 +346,21 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
   .fmap.routing .leaflet-overlay-pane path, .fmap.routing .leaflet-moves-pane path { opacity: 0.25; }
   .fmap-stop span { position: absolute; transform: translate(-50%, -50%); background: #3b2e22; color: #fff; border-radius: 1rem;
     padding: 0.1rem 0.45rem; font: 700 0.8rem system-ui, sans-serif; white-space: nowrap; box-shadow: 0 0 0 2px #fff; }
+  .fmap-time { margin: 0.6rem 0; font-size: 0.9rem; }
+  .fmap-time-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; }
+  .fmap-time-ctl input[type=range] { width: min(18rem, 60vw); vertical-align: middle; }
+  .fmap-time-ctl button { min-width: 2.6rem; min-height: 2.2rem; font: inherit; }
+  .fmap-time-key { color: #6e6153; font-size: 0.8rem; }
+  .fmap-time-key i { font-style: normal; font-weight: 700; margin-left: 0.4rem; }
+  .fmap-time-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 8px; margin-top: 0.4rem; }
+  .fmap-time-track { position: relative; height: 84px; min-width: 100%; }
+  .fmap-time-track .tick { position: absolute; bottom: 0; transform: translateX(-50%); font-size: 0.7rem; color: #6e6153;
+    border-left: 1px solid var(--line); padding-left: 0.2rem; height: 1.1rem; }
+  .fmap-time-track .cursor { position: absolute; top: 0; bottom: 0; width: 2px; background: #d7302a; pointer-events: none; }
+  .fmap-time-track .ev { position: absolute; width: 14px; height: 14px; padding: 0; border: 0; background: none; cursor: pointer;
+    font: 700 12px/14px system-ui, sans-serif; text-align: center; transform: translateX(-50%); }
+  .fmap-time-track .ev:hover, .fmap-time-track .ev:focus { outline: 2px solid #d7302a; border-radius: 50%; }
+  .k-narozeni { color: #2f7d4a; } .k-snatek { color: #b5651d; } .k-umrti { color: #3b2e22; } .k-stehovani { color: #2a5d9f; }
   .leaflet-popup-content { font-size: 0.85rem; line-height: 1.4; }
   .leaflet-popup-content .y { color: #6e6153; }
   .leaflet-popup-content .pl { border-left: 4px solid var(--c); padding-left: 0.35rem; }
