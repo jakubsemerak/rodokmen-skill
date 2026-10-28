@@ -6,7 +6,7 @@ SKILL = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def run(proj, tool, *args):
     r = subprocess.run([sys.executable, "-I", "-X", "utf8", os.path.join(proj, "tools", tool), *args],
-                       cwd=proj, capture_output=True, text=True, encoding="utf-8")
+                       cwd=proj, capture_output=True, text=True, encoding="utf-8", timeout=60)
     return r.stdout + r.stderr
 
 
@@ -30,6 +30,17 @@ GED = """0 HEAD
 1 DEAT
 2 DATE BEF 1910
 1 FAMS @F0@
+1 FAMC @F00@
+0 @I5@ INDI
+1 NAME Václav /Novák/
+1 SEX M
+1 BIRT
+2 PLAC Ostřetín čp. 5
+1 OCCU sedlák
+1 FAMS @F00@
+0 @F00@ FAM
+1 HUSB @I5@
+1 CHIL @I3@
 0 @I4@ INDI
 1 NAME Anna /Malá/
 1 SEX F
@@ -75,6 +86,12 @@ class GedImport(unittest.TestCase):
         self.assertEqual(self.P[4]["y"], "asi 1850 – před 1910")
         self.assertIn("† před 1910", self.P[4]["f"])
         self.assertIn("švadlena", self.P[5]["f"])   # bez úmrtí, ale sňatek 1880 – nežije
+        self.assertIn("sedlák", self.P[8]["f"])   # bez jakéhokoli data, ale syn narozen asi 1850
+        self.assertNotIn("note", self.P[8])
+
+    def test_bez_udalosti_zijici(self):
+        self.assertEqual(self.P[1]["f"], [])
+        self.assertIn("Žijící", self.P[1]["note"])
 
 
 class Ukazka(unittest.TestCase):
