@@ -20,5 +20,6 @@ web/nginx.conf
 web/netlify/edge-functions/
 web/cloudflare/worker.js
 web/wrangler.jsonc
+web/functions/_middleware.js
 web/.wrangler/
 vystupy/rodokmen.sqlite

@@ -193,7 +193,7 @@ Podrobně `reference/web.md`. Ve zkratce:
 ## Fáze 5 – Zveřejnění (volitelné, jen se souhlasem)
 Výchozí je **Cloudflare** (zdarma, bez limitu nasazení): `npx -y wrangler@4 login`, název adresy do `web.json`
 (`cloudflare.nazev`) a `npm run nasadit-cloudflare` – postup v `reference/web.md`. Kdo už má web na Netlify, pokračuje
-`npm run nasadit`. Nic nezveřejňuj bez výslovného souhlasu uživatele. Po zveřejnění **nenasazuj po každém kole**
+`npm run nasadit`, kdo má web na Cloudflare Pages (`*.pages.dev`), `CF_PAGES_PROJECT=<název> npm run nasadit-cloudflare-pages`. Nic nezveřejňuj bez výslovného souhlasu uživatele. Po zveřejnění **nenasazuj po každém kole**
 (Netlify zdarma vystačí asi na 20 nasazení měsíčně) – obnovuj jen náhled a nasazuj na pokyn nebo jednou na konci sezení.
 
 ## Poznámky pro správce skillu
