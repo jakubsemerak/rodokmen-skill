@@ -132,6 +132,9 @@ Adresy u nevyzkoušených portálů ověř při prvním použití (portály se m
   nebo zkusí jinou síť.
 - Knihu najdi v prohlížeči podle obce nebo fary. Snímky jsou IIIF: adresu obrázku najdi v síťovém provozu a stáhni ji
   přes `curl` (Python dostane HTTP 426). Dál podle „Ostatní portály“ níže.
+- Bez prohlížeče jde jen najít knihu: `curl` na `matrika/hledani_obec?search_by_obec=<obec>` vrátí tabulku knih s odkazy
+  `matrika/detail/<id>`, v detailu jsou rozsahy snímků po obcích. Snímky z `iipsrv` ale bez prohlížeče vrací 403 –
+  na moravské matriky je prohlížeč nutný. Ověř to ve Fázi 0, když předci pocházejí z Moravy.
 
 ## Pražské policejní přihlášky 1850–1914 (Národní archiv) – `tools/policie_prihlasky.py`
 - Karty pražských rodin: hlava rodiny, manželka s rokem a místem narození, děti s roky, adresy, někdy místo sňatku.
@@ -190,6 +193,9 @@ A když osoba „chybí“ v očekávaných matrikách (stěhovala se se službo
   – jména **německy** („Johann Nowak“, „Wenzel Dworschak“). Výřez místa: `tools/anno_snap.py <docId> "<dotaz>" pracovni/x.jpg`.
   ALEX a annoshow jsou za Cloudflare – neobcházet.
 - Kramerius NK ČR (české noviny, ročenky, adresáře): `python3 -I tools/kramerius.py 'text_ocr:"Jan Novák" AND datum_begin:[1900 TO 1910]'`.
+  Hledání vrátí jen útržky; celý OCR text stránky dá `python3 -I tools/kramerius.py text <PID> pracovni/x.txt` (jen veřejné stránky).
+  Učitelé: veřejné „Seznam národních škol a jejich učitelstva v ČSR“ (1933) a „Schematismus českého školství na Moravě“ (1910)
+  uvádějí rok narození a působiště.
 - Vojenské schematismy: fulltext na archive.org (např. `militrschematis13kriegoog` = 1850).
 - **Rizika:** jména se opakují a fulltext šumí („Winter“ = i zima, „Novák“ = nový obyvatel). Ztotožni jen při shodě víc údajů (bydliště,
   funkce navazující na matriku, časová posloupnost). Zdroj je „J“ (jiný pramen) – vodítko a příběh, ne náhrada matriky.
