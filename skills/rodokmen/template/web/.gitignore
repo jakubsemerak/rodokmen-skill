@@ -10,4 +10,6 @@ public/zdroje/
 public/prihlaseni.html
 nginx.conf
 netlify/edge-functions/
+functions/_middleware.js
+.wrangler
 public/data/

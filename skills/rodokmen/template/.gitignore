@@ -18,4 +18,6 @@ web/public/prihlaseni.html
 web/public/data/
 web/nginx.conf
 web/netlify/edge-functions/
+web/functions/_middleware.js
+web/.wrangler/
 vystupy/rodokmen.sqlite

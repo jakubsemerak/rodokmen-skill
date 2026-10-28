@@ -35,7 +35,7 @@ Náhled spouštěj na pozadí a uživateli pošli odkaz. Vzhled si ověř sám (
 - **Přihlášení:** otázka, na kterou zná odpověď jen rodina (ne snadno dohledatelná na sociálních sítích).
   Odpověď se porovnává bez diakritiky a velkých písmen. Na serveru i v cookie prohlížeče je jen její otisk (SHA-256),
   samotná odpověď se nikam neukládá. Krátkou nebo běžnou odpověď (jméno, obec) ale jde z otisku uhádnout zkoušením,
-  proto ať ji uživatel nepoužívá jako heslo jinde. Bez odpovědi nasazení (`npm run nasadit`, `deploy-caprover`)
+  proto ať ji uživatel nepoužívá jako heslo jinde. Bez odpovědi nasazení (`npm run nasadit`, `nasadit-cloudflare`, `deploy-caprover`)
   skončí chybou; otevřený web jen výslovně přes `"otevreny": true` v `prihlaseni`.
   Je to lehká ochrana proti náhodným návštěvníkům, ne bankovní zabezpečení – citlivé věci na web nepatří.
 - `uvod.foto` = klíč obrázku ve `vyrezy/` (ulož přes `vyrez.py`).
@@ -71,6 +71,22 @@ Náhled spouštěj na pozadí a uživateli pošli odkaz. Vzhled si ověř sám (
 Další aktualizace = jen `npm run nasadit`. Vlastní doménu lze nastavit v administraci Netlify.
 
 **Pozor:** „Netlify Drop“ (přetažení složky v prohlížeči) neumí Edge Functions → web by byl bez přihlášení. Nepoužívat.
+
+## Zveřejnění na Cloudflare Pages (alternativa, zdarma)
+Stejná brána s rodinnou otázkou jako na Netlify: export vyrobí `web/functions/_middleware.js` (Pages Functions,
+otisk odpovědi v cookie), nepřihlášenému ukáže přihlašovací stránku s kódem 401 na původní adrese.
+1. Uživatel si založí účet na cloudflare.com – udělá sám.
+2. Přihlášení CLI (otevře prohlížeč) – dej uživateli: `! cd web && npx -y wrangler@4.150.0 login`.
+3. Založení projektu (jednou; můžeš spustit sám, když je přihlášený):
+   `cd web && npx -y wrangler@4.150.0 pages project create <název> --production-branch main` → adresa `https://<název>.pages.dev`.
+4. Nasazení: `cd web && CF_PAGES_PROJECT=<název> npm run nasadit-cloudflare`. Název projektu se čte **jen z proměnné
+   prostředí** `CF_PAGES_PROJECT` (Windows PowerShell: `$env:CF_PAGES_PROJECT="<název>"; npm run nasadit-cloudflare`
+   nefunguje – `$CF_PAGES_PROJECT` v npm skriptu rozbalí jen bash/zsh; na Windows spusť nasazení z Git Bash).
+   Skript se spouští ve `web/`: wrangler bere složku `functions/` z aktuální složky a nahraje ji vedle `dist/`.
+5. Ověř v anonymním okně, že se ukáže rodinná otázka (jako u Netlify, krok 5).
+Místo rodinné otázky lze použít **Cloudflare Access** (Zero Trust → Access → aplikace pro doménu `*.pages.dev`,
+přihlášení e-mailem s jednorázovým kódem jen pro vyjmenované adresy) – silnější, ale každého příbuzného musí uživatel
+přidat; rodinná otázka pak může zůstat jako druhá vrstva.
 
 ## Náhled v Claude desktop
 Projekt má `.claude/launch.json` – náhled webu v Claude desktop spustí `npm --prefix web run dev` (port 4321). Data se

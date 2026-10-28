@@ -4,7 +4,7 @@
 Čte data/osoby.py, data/zaznamy.json, data/svazky.json, data/prepisy.json, data/zvyrazneni.json,
 data/mista.json, data/web.json, data/dokumenty.json a markdownové poznámky. Zapisuje
 web/src/data/site.json, web/src/generated/*, web/public/{img,zdroje}, web/public/prihlaseni.html,
-web/public/data/rodokmen.json, web/nginx.conf, web/netlify/edge-functions/brana.js
+web/public/data/rodokmen.json, web/nginx.conf, web/netlify/edge-functions/brana.js, web/functions/_middleware.js
 a vystupy/rodokmen.sqlite (i se soukromými údaji – jen pro dotazy, nenasazuje se).
 
 Spouští se z web/ příkazem `npm run data` (nebo přímo `python3 -I tools/export_web.py`, na Windows `python -I -X utf8 …`).
@@ -172,14 +172,17 @@ def login_files(cfg):
     write(os.path.join(WEB, "public", "prihlaseni.html"), page)
 
     edge = os.path.join(WEB, "netlify", "edge-functions", "brana.js")
+    cf = os.path.join(WEB, "functions", "_middleware.js")   # Cloudflare Pages
     if answer:
         digest = hashlib.sha256(("rodokmen:" + answer).encode()).hexdigest()
         nginx_map = f'  "{digest}" 1;'
         write(edge, open(os.path.join(WEB, "netlify", "brana.sablona.js"), encoding="utf-8").read().replace("{{HASH}}", digest))
+        write(cf, open(os.path.join(WEB, "cloudflare", "brana.sablona.js"), encoding="utf-8").read().replace("{{HASH}}", digest))
     else:   # bez přihlášení – web je otevřený
         nginx_map = "  default 1;"
-        if os.path.exists(edge):
-            os.remove(edge)
+        for f in (edge, cf):
+            if os.path.exists(f):
+                os.remove(f)
     nginx = open(os.path.join(WEB, "nginx.sablona.conf"), encoding="utf-8").read().replace("{{ODPOVED}}", nginx_map)
     write(os.path.join(WEB, "nginx.conf"), nginx)
     return bool(answer)

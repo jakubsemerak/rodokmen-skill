@@ -10,6 +10,7 @@
     "preview": "astro preview",
     "nahled": "npm run data && npm run build && astro preview",
     "nasadit": "npm run data -- --nasazeni && npm run build && npx -y netlify-cli@latest deploy --prod --dir=dist",
+    "nasadit-cloudflare": "npm run data -- --nasazeni && npm run build && npx -y wrangler@4.150.0 pages deploy dist --project-name \"$CF_PAGES_PROJECT\" --branch main",
     "pack": "tar -czf ../rodokmen-web.tar.gz --exclude=node_modules --exclude=dist --exclude=.astro .",
     "deploy-caprover": "npm run data -- --nasazeni && npm run pack && caprover deploy -t ../rodokmen-web.tar.gz"
   },

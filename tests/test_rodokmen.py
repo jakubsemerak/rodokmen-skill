@@ -204,6 +204,20 @@ class Ukazka(unittest.TestCase):
         _, s = self.export()
         self.assertEqual(s["config"]["mapa"]["klic"], "TESTKEY")
 
+    def test_brana_cloudflare(self):
+        import hashlib
+        self.export()
+        mw = pathlib.Path(self.p, "web", "functions", "_middleware.js")
+        digest = hashlib.sha256("rodokmen:kovar".encode()).hexdigest()
+        self.assertIn(f"const HASH = '{digest}';", mw.read_text(encoding="utf-8"))
+        self.assertNotIn("kovář", mw.read_text(encoding="utf-8"))
+        path = pathlib.Path(self.p, "data", "web.json")
+        cfg = json.loads(path.read_text(encoding="utf-8"))
+        cfg["prihlaseni"]["odpoved"] = ""
+        path.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+        self.export()
+        self.assertFalse(mw.exists())
+
     def test_domov_z_volneho_textu_kdyz_narozeni_bez_obce(self):
         self.osoby("'f': ['* 1862 Ostřetín čp. 23',", "'f': ['* 1862', 'bydlela v Býšti',")
         _, s = self.export()
