@@ -80,6 +80,12 @@ Export určí každé osobě **domov**: první obec z `mista.json` ve faktu o na
 Proto piš obec do faktu o narození vždy, když ji znáš (`"* 1862 Ostřetín čp. 23"`), a každou obec z faktů přidej
 do `mista.json` – `kontrola.py` hlásí obce narození (`* rok Obec`), které tam chybí; ostatní obce hlídej sám. Osoba bez známé obce na mapě nebude a cesta ji přeskočí.
 
+### Časová osa pod mapou
+Stránka `/mapa/` má pod mapou časovou osu: narození, sňatky a úmrtí z faktů s rokem (`* 12. 3. 1873 Hořice`) a stěhování
+(rok = narození dítěte v cílové obci). Posuvník „Mapa do roku“ a tlačítko ▶ ukazují, jak se rod šířil. Export je zapisuje
+do `site.json` jako `events` (`year`, `date` jak je zapsáno, `kind`, `people`, `place`, `label`). Sňatek se páruje mezi
+manžely podle roku – zapiš ho u obou se stejným rokem.
+
 ## `dokumenty.json` – rodinné fotky a dokumenty na webu
 `[{"img": "foto_svatba_1919", "popis": "Svatba Jana a Josefy, Holice 1919.", "osoby": [8, 9]}]`
 Obrázek ulož přes `vyrez.py dokumenty/<sken>.jpg foto_svatba_1919` (vznikne `vyrezy/` i `zdroje/`).

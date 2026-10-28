@@ -138,6 +138,17 @@ class Ukazka(unittest.TestCase):
         self.assertFalse([m for m in s["moves"] if m["src"] == m["dst"]])
         self.assertEqual(s["coords"]["Holice"], [50.0663, 15.9859])
 
+    def test_casova_osa_udalosti(self):
+        _, s = self.export()
+        ev = s["events"]
+        self.assertEqual([e["year"] for e in ev], sorted(e["year"] for e in ev))
+        b = next(e for e in ev if e["kind"] == "narozeni" and e["people"] == ["barbora-mala-1862"])
+        self.assertEqual((b["year"], b["date"], b["place"]), (1862, "1862", "Ostřetín"))
+        wed = [e for e in ev if e["kind"] == "snatek" and "barbora-mala-1862" in e["people"]]
+        self.assertEqual(len(wed), 1)
+        self.assertEqual((wed[0]["people"], wed[0]["place"]), (["vaclav-novak-1858", "barbora-mala-1862"], "Holice"))
+        self.assertTrue(any(e["kind"] == "stehovani" and e["src"] == "Ostřetín" and e["place"] == "Holice" for e in ev))
+
     def test_domov_z_volneho_textu_kdyz_narozeni_bez_obce(self):
         self.osoby("'f': ['* 1862 Ostřetín čp. 23',", "'f': ['* 1862', 'bydlela v Býšti',")
         _, s = self.export()

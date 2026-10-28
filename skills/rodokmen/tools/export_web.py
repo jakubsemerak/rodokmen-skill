@@ -344,6 +344,37 @@ def main():
             if src and dst and src != dst:
                 moves.setdefault((src, dst, p["line"] or 0), []).append(p["slug"])
     moves = [dict(src=s, dst=d, line=l, people=v) for (s, d, l), v in moves.items()]
+
+    def place_of(f):
+        hits = [(m.start(), m.start() - m.end(), n) for n, rx in place_rx for m in [rx.search(f)] if m]
+        return min(hits)[2] if hits else None
+
+    events, wed = [], {}
+    for p in sorted(people.values(), key=lambda p: p["k"]):
+        for f in p["facts"]:
+            m = re.match(r"([*×†])\s*((?:asi\s+|kol\.\s*|před\s+|po\s+)?[\d./ ]*?\b(1[4-9]\d\d|20\d\d)\b)", f)
+            if not m:
+                continue
+            kind = {"*": "narozeni", "×": "snatek", "†": "umrti"}[m.group(1)]
+            ev = dict(year=int(m.group(3)), date=m.group(2).strip(), kind=kind, people=[p["slug"]],
+                      place=place_of(f), label=f"{m.group(1)} {p['name']}")
+            if kind == "snatek":   # sňatek u manžela i manželky jen jednou
+                pair = wed.get((ev["year"], p["spouse"]))
+                if pair and p["slug"] not in pair["people"]:
+                    pair["people"].append(p["slug"])
+                    pair["label"] += f" a {p['name']}"
+                    pair["place"] = pair["place"] or ev["place"]
+                    continue
+                wed[(ev["year"], p["slug"])] = ev
+            events.append(ev)
+    born = {e["people"][0]: e["year"] for e in events if e["kind"] == "narozeni"}
+    for mv in moves:
+        ys = [born[c] for s in mv["people"] for c in people[s]["children"] if c in born]
+        mv["year"] = min(ys) if ys else None
+        if ys:
+            events.append(dict(year=mv["year"], date="", kind="stehovani", people=mv["people"], place=mv["dst"], src=mv["src"],
+                               label=f"{mv['src']} → {mv['dst']}"))
+    events.sort(key=lambda e: (e["year"], ["narozeni", "snatek", "stehovani", "umrti"].index(e["kind"])))
     coords = {n: [mista[n]["lat"], mista[n]["lon"]] for n, _ in place_rx}
 
     places = []
@@ -376,7 +407,7 @@ def main():
     has_story = os.path.exists(os.path.join(DATA, "pribeh.md"))
     public_cfg = {k: v for k, v in cfg.items() if k != "prihlaseni"}
     public_cfg["maPribeh"] = has_story
-    site = dict(config=public_cfg, places=places, moves=moves, coords=coords, root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
+    site = dict(config=public_cfg, places=places, moves=moves, events=events, coords=coords, root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
                 families=families, records=records, lines=lines,
                 issues=[dict(title=i, text="") if isinstance(i, str) else dict(title=i[0], text=i[1]) for i in ISSUES], stats=stats, hypotheses=hypotheses,
                 docs=[dict(img=d["img"], caption=d["popis"], people=[slugs[k] for k in d.get("osoby", []) if k in slugs])
