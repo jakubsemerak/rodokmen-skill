@@ -78,6 +78,13 @@ def main():
         out = os.path.join(dst, name)
         if not os.path.lexists(out):
             copy(os.path.join(SKILL, "template", name), out)
+        elif name == ".gitignore" and not os.path.islink(out):   # nové položky (třeba soukromá databáze) doplnit i staršímu projektu
+            have = set(open(out, encoding="utf-8").read().splitlines())
+            new = [l for l in open(os.path.join(SKILL, "template", name), encoding="utf-8").read().splitlines()
+                   if l.strip() and not l.startswith("#") and l not in have]
+            if new:
+                with open(out, "a", encoding="utf-8", newline="\n") as f:
+                    f.write("\n# doplněno aktualizací skillu\n" + "\n".join(new) + "\n")
     with open(os.path.join(dst, ".skill_verze"), "w", encoding="utf-8") as f:   # SKILL.md podle něj nabídne aktualizaci
         f.write(open(os.path.join(SKILL, "VERZE"), encoding="utf-8").read())
     print("Projekt připraven:", dst)

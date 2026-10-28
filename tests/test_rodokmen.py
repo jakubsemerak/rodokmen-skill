@@ -218,6 +218,15 @@ class Ukazka(unittest.TestCase):
         self.export()
         self.assertFalse(mw.exists())
 
+    def test_aktualizace_doplni_gitignore(self):
+        gi = pathlib.Path(self.p, ".gitignore")
+        gi.write_text("pracovni/\nmoje/\n", encoding="utf-8")
+        subprocess.run([sys.executable, "-I", os.path.join(SKILL, "tools", "novy_projekt.py"), self.p], check=True, capture_output=True)
+        lines = gi.read_text(encoding="utf-8").splitlines()
+        self.assertIn("vystupy/rodokmen.sqlite", lines)
+        self.assertIn("moje/", lines)
+        self.assertEqual(lines.count("pracovni/"), 1)
+
     def test_domov_z_volneho_textu_kdyz_narozeni_bez_obce(self):
         self.osoby("'f': ['* 1862 Ostřetín čp. 23',", "'f': ['* 1862', 'bydlela v Býšti',")
         _, s = self.export()
