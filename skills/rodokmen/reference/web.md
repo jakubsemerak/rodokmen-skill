@@ -187,3 +187,5 @@ nebo složku na místě zálohy skript odmítne s hláškou POZOR a soubory za n
 3. **Sloučeno:** prohlédni výsledek (`git diff`), jestli dává smysl.
 4. Ve `web/` `npm install`, `npm run data` a `npm run build`, pak `python3 -I tools/kontrola.py`.
 Starou šablonu přihlášení `export_web.py` odmítne s výzvou k aktualizaci.
+Projekt s matrikami z ARON založený verzí do 0.10.0: spusť i `python3 -I tools/aron_img.py opravit-odkazy` (odkazy na
+snímky vedly na první snímek svazku).

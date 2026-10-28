@@ -11,10 +11,11 @@ Použití:
   aron_img.py <apu_id> info          -> název svazku a počet snímků
   aron_img.py <apu_id> link <n>      -> trvalý odkaz na snímek n v prohlížeči ARON (pole "odkaz" v zaznamy.json)
   aron_img.py <apu_id> svazek        -> zapíše svazek do data/svazky.json (klíč = prvních 8 znaků apu_id)
+  aron_img.py opravit-odkazy         -> opraví v data/zaznamy.json odkazy z verzí do 0.10.0 (otevíraly první snímek)
 
 Popis svazků se ukládá do pracovni/.cache_aron/<apu_id>.json (ve složce projektu).
 """
-import glob, json, math, os, shutil, ssl, subprocess, sys, tempfile, time, urllib.error, urllib.request
+import glob, json, math, os, re, shutil, ssl, subprocess, sys, tempfile, time, urllib.error, urllib.request
 import concurrent.futures as cf
 import xml.etree.ElementTree as ET
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import slusne  # noqa: E402 – brzda proti zablokování archivem (společný limit dotazů, tools/slusne.py)
@@ -184,7 +185,51 @@ def chyba_archivu(e):
     sys.exit(f"ARON neodpovídá ({duvod}) – zkus to později.")
 
 
+LINK = re.compile(r"https://aron\.vychodoceskearchivy\.cz/apu/([0-9a-f-]{36})/dao/([0-9a-f-]{36})/file/([0-9a-f-]{36})")
+
+
+def link(apu, vol, n):
+    # prohlížeč ARON najde stránku jen podle id varianty TILE; s id PUBLISHED otevře vždy první snímek (#18)
+    for dao in vol.get("digitalObjects", []):
+        for f in dao["files"]:
+            if f["type"] == "TILE" and f["order"] == n:
+                return f"https://aron.vychodoceskearchivy.cz/apu/{apu}/dao/{dao['id']}/file/{f['id']}"
+    sys.exit(f"Snímek {n} ve svazku {apu} není.")
+
+
+def fix_links():
+    """Přepíše v data/zaznamy.json odkazy na variantu PUBLISHED (do verze 0.10.0) na TILE téhož snímku."""
+    path = os.path.join(ROOT, "data", "zaznamy.json")
+    text = open(path, encoding="utf-8").read()
+    fixed = 0
+    for z in json.loads(text):
+        m = LINK.search(z.get("odkaz") or "")
+        if not m:
+            continue
+        apu, dao_id, fid = m.groups()
+        files = [f for d in volume(apu).get("digitalObjects", []) if d["id"] == dao_id for f in d["files"]]
+        pub = next((f for f in files if f["id"] == fid and f["type"] == "PUBLISHED"), None)
+        if not pub:
+            continue
+        tile = next((f for f in files if f["type"] == "TILE" and f["order"] == pub["order"]), None)
+        if not tile:
+            print(f"{z['klic']}: snímek {pub['order']} nemá dlaždice – odkaz nechán")
+            continue
+        text = text.replace(fid, tile["id"])
+        fixed += 1
+        if z.get("snimek") not in (None, "", pub["order"]):
+            print(f"POZOR {z['klic']}: odkaz vede na snímek {pub['order']}, v zápisu je snímek {z['snimek']}")
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+    os.replace(tmp, path)
+    print(f"data/zaznamy.json: opraveno {fixed} odkazů na ARON")
+
+
 if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] == "opravit-odkazy":
+        fix_links()
+        sys.exit(0)
     if len(sys.argv) < 3 or sys.argv[1] in ("-h", "--help"):
         sys.exit(__doc__)
     apu = sys.argv[1]
@@ -215,12 +260,7 @@ if __name__ == "__main__":
         print(apu[:8], "->", sv[apu[:8]]["svazek"])
         sys.exit(0)
     if sys.argv[2] == "link":
-        n = int(sys.argv[3])
-        dao = (vol.get("digitalObjects") or [{}])[0]
-        pub = [f for f in dao.get("files", []) if f["type"] == "PUBLISHED" and f["order"] == n]
-        if not pub:
-            bez_snimku(vol, tiles, n)
-        print(f"https://aron.vychodoceskearchivy.cz/apu/{apu}/dao/{dao['id']}/file/{pub[0]['id']}")
+        print(link(apu, vol, int(sys.argv[3])))
         sys.exit(0)
     n = int(sys.argv[2])
     lo = int(sys.argv[3]) if len(sys.argv) > 3 else 1
