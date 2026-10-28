@@ -1,15 +1,19 @@
 ---
-// Mapa míst, kde žili předci (Leaflet + OpenStreetMap); jedna tečka za (místo, rod).
+// Mapa míst, kde žili předci (Leaflet + OpenStreetMap); jedna tečka za (místo, rod), šipky stěhování a cesta předka.
 import 'leaflet/dist/leaflet.css';
 import site from '../data/site.json';
-import { lineByK, people, href } from '../lib/data.js';
+import { lineByK, people, href, routeOf } from '../lib/data.js';
 const { height = '70vh', compact = false } = Astro.props;
 const ROOT_COLOR = '#8a6d52';
 const lines = Object.fromEntries(Object.values(lineByK).map((l) => [l.k, { name: l.name, color: l.color, slug: l.slug }]));
 lines[0] = { name: 'rodiče a prarodiče', color: ROOT_COLOR, slug: null };
+const routes = compact ? {} : Object.fromEntries(Object.keys(people).map((s) => [s, routeOf(s)]).filter(([, r]) => r.length));
+const routeList = Object.keys(routes).sort((a, b) => people[a].k - people[b].k);
+const named = new Set(site.places.flatMap((pl) => pl.lines.flatMap((l) => l.people)));
+if (!compact) for (const s of Object.keys(people)) named.add(s);
 const names = {};
-for (const pl of site.places) for (const l of pl.lines) for (const s of l.people) names[s] = [people[s].name, people[s].years, href.person(s)];
-const payload = JSON.stringify({ places: site.places, lines, names, compact });
+for (const s of named) names[s] = [people[s].name, people[s].years, href.person(s), people[s].photo?.img ?? null];
+const payload = JSON.stringify({ places: site.places, lines, names, compact, moves: compact ? [] : site.moves ?? [], coords: site.coords ?? {}, routes });
 ---
 <div class="fmap" style={`height:${height}`} data-map={payload}></div>
 {!compact && (
@@ -18,6 +22,19 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact });
       <label><input type="checkbox" data-line={k} checked /><span class="dot" style={`background:${l.color}`}></span>{l.name}</label>
     ))}
     <label><input type="checkbox" data-line="0" checked /><span class="dot" style={`background:${ROOT_COLOR}`}></span>rodiče a prarodiče</label>
+    {(site.moves ?? []).length > 0 && <label><input type="checkbox" data-moves checked /><span class="arrow">➝</span>stěhování</label>}
+  </div>
+)}
+{routeList.length > 0 && (
+  <div class="fmap-route">
+    <label>Cesta předka:
+      <select>
+        <option value="">— vyberte předka —</option>
+        {routeList.map((s) => <option value={s}>{people[s].name}{people[s].years && ` (${people[s].years})`} – {routes[s].length} míst</option>)}
+      </select>
+    </label>
+    <button type="button" data-step="-1" disabled>◀ krok</button>
+    <button type="button" data-step="1" disabled>krok ▶</button>
   </div>
 )}
 
@@ -25,9 +42,40 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact });
   import L from 'leaflet';
   // jména pocházejí z dat (i z importovaného GEDCOM) – do HTML popupu a tooltipu jen jako text
   const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  type LatLon = [number, number];
+
+  // oblouk vždy vpravo od směru cesty: tam a zpět mezi sousedními obcemi dá smyčku, ne jednu čáru
+  function curve(a: LatLon, b: LatLon, end = 0.9): LatLon[] {
+    const k = Math.cos((a[0] * Math.PI) / 180);
+    const [ax, ay, bx, by] = [a[1] * k, a[0], b[1] * k, b[0]];
+    const mx = (ax + bx) / 2 + (by - ay) * 0.2, my = (ay + by) / 2 - (bx - ax) * 0.2;
+    const pts: LatLon[] = [];
+    for (let i = 0; i <= 16; i++) {
+      const t = (i / 16) * end, u = 1 - t;
+      pts.push([u * u * ay + 2 * u * t * my + t * t * by, (u * u * ax + 2 * u * t * mx + t * t * bx) / k]);
+    }
+    return pts;
+  }
+
+  function arrowHead(path: SVGElement, color: string) {
+    const svg = path.ownerSVGElement!;
+    const id = `fmap-arrow-${color.replace(/[^0-9a-z]/gi, '')}`;
+    if (!svg.querySelector(`#${id}`)) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const defs = svg.querySelector('defs') ?? svg.insertBefore(document.createElementNS(ns, 'defs'), svg.firstChild);
+      const m = document.createElementNS(ns, 'marker');
+      for (const [a, v] of Object.entries({ id, viewBox: '0 0 10 10', refX: '7', refY: '5', markerWidth: '4', markerHeight: '4', orient: 'auto' })) m.setAttribute(a, v);
+      const tip = document.createElementNS(ns, 'path');
+      tip.setAttribute('d', 'M0,0 L10,5 L0,10 z');
+      tip.setAttribute('fill', color);
+      m.appendChild(tip);
+      defs.appendChild(m);
+    }
+    path.setAttribute('marker-end', `url(#${id})`);
+  }
 
   for (const el of document.querySelectorAll<HTMLElement>('.fmap')) {
-    const { places, lines, names, compact } = JSON.parse(el.dataset.map!);
+    const { places, lines, names, compact, moves, coords, routes } = JSON.parse(el.dataset.map!);
     // Gesture handling: page scroll stays page scroll. Zoom with Ctrl/⌘ + wheel (or trackpad pinch),
     // on touch devices move the map with two fingers; otherwise show a short hint.
     const touch = window.matchMedia('(pointer: coarse)').matches;
@@ -52,7 +100,30 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact });
       maxZoom: 18,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
-    const groups: Record<string, L.LayerGroup> = {};
+    map.createPane('moves').style.zIndex = '350';   // šipky pod tečkami obcí
+    map.createPane('route').style.zIndex = '450';   // vybraná cesta nad nimi
+    const movesRenderer = L.svg({ pane: 'moves' }), routeRenderer = L.svg({ pane: 'route' });
+
+    const person = (s: string) =>
+      `${names[s][3] ? `<img class="fmap-photo" src="/img/${esc(names[s][3])}.jpg" alt="">` : ''}` +
+      `<a href="${esc(names[s][2])}">${esc(names[s][0])}</a>${names[s][1] ? ` <span class="y">${esc(names[s][1])}</span>` : ''}`;
+    const placePhoto = (pl: { photo?: string; photoCaption?: string }) =>
+      pl.photo ? `<img class="fmap-place-photo" src="/img/${esc(pl.photo)}.jpg" alt=""><span class="cap">${esc(pl.photoCaption)}</span>` : '';
+    const placeByName = Object.fromEntries(places.map((pl: { name: string }) => [pl.name, pl]));
+
+    const dotGroups: Record<string, L.LayerGroup> = {};
+    const moveGroups: Record<string, L.LayerGroup> = {};
+    for (const mv of moves) {
+      const a = coords[mv.src], b = coords[mv.dst];
+      if (!a || !b) continue;
+      const line = lines[mv.line] ?? lines[0];
+      const poly = L.polyline(curve(a, b), { renderer: movesRenderer, pane: 'moves', color: line.color, weight: 1.5 + Math.sqrt(mv.people.length), opacity: 0.85 });
+      poly.bindTooltip(`${esc(mv.src)} → ${esc(mv.dst)} · ${esc(line.name)} (${mv.people.length})`, { sticky: true });
+      poly.bindPopup(`<strong>${esc(mv.src)} → ${esc(mv.dst)}</strong><br>${mv.people.map(person).join('<br>')}`, { maxHeight: 260 });
+      poly.on('add', () => arrowHead(poly.getElement() as SVGElement, line.color));
+      (moveGroups[mv.line] ??= L.layerGroup()).addLayer(poly);
+    }
+
     const bounds: L.LatLngExpression[] = [];
     for (const pl of places) {
       const n = pl.lines.length;
@@ -70,29 +141,90 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact });
           fillOpacity: pl.hypothesis ? 0.35 : 0.9,
           dashArray: pl.hypothesis ? '3 3' : undefined,
         });
-        const who = ln.people
-          .map((s) => `<a href="${esc(names[s][2])}">${esc(names[s][0])}</a>${names[s][1] ? ` <span class="y">${esc(names[s][1])}</span>` : ''}`)
-          .join('<br>');
+        const who = ln.people.map(person).join('<br>');
         const head = line.slug ? `<a href="/rod/${esc(line.slug)}/">${esc(line.name)}</a>` : esc(line.name);
         marker.bindPopup(
-          `<strong>${esc(pl.name)}</strong>${pl.years ? ` <span class="y">${pl.years[0]}–${pl.years[1]}</span>` : ''}<br>` +
+          placePhoto(pl) +
+            `<strong>${esc(pl.name)}</strong>${pl.years ? ` <span class="y">${pl.years[0]}–${pl.years[1]}</span>` : ''}<br>` +
             `<span class="pl" style="--c:${esc(line.color)}">${head}</span><br>` +
             (pl.hypothesis ? 'hypotéza – vazba zatím neprokázaná' : who),
-          { maxHeight: 260 }
+          { maxHeight: 320 }
         );
         marker.bindTooltip(`${esc(pl.name)} · ${esc(line.name)}${count ? ` (${count})` : ''}`);
-        (groups[ln.k] ??= L.layerGroup().addTo(map)).addLayer(marker);
+        (dotGroups[ln.k] ??= L.layerGroup()).addLayer(marker);
         bounds.push(pos);
       });
     }
     if (bounds.length) map.fitBounds(L.latLngBounds(bounds), { padding: [20, 20], maxZoom: 11 });
     else map.setView([49.8, 15.5], 7);
-    el.parentElement?.querySelectorAll<HTMLInputElement>('.fmap-legend input').forEach((cb) =>
+
+    const shown: Record<string, boolean> = Object.fromEntries(Object.keys(lines).map((k) => [k, true]));
+    let movesOn = !compact;
+    const refresh = () => {
+      for (const [k, g] of Object.entries(dotGroups)) shown[k] !== false ? g.addTo(map) : g.remove();
+      for (const [k, g] of Object.entries(moveGroups)) movesOn && shown[k] !== false ? g.addTo(map) : g.remove();
+    };
+    refresh();
+    const box = el.parentElement!;
+    box.querySelectorAll<HTMLInputElement>('.fmap-legend input').forEach((cb) =>
       cb.addEventListener('change', () => {
-        const g = groups[cb.dataset.line!];
-        if (g) cb.checked ? g.addTo(map) : g.remove();
+        if (cb.dataset.line !== undefined) shown[cb.dataset.line] = cb.checked;
+        else movesOn = cb.checked;
+        refresh();
       })
     );
+
+    // cesta jednoho předka k výchozí osobě, obec po obci (?cesta=<slug>)
+    const select = box.querySelector<HTMLSelectElement>('.fmap-route select');
+    const steps = [...box.querySelectorAll<HTMLButtonElement>('.fmap-route button')];
+    const routeLayer = L.layerGroup().addTo(map);
+    let stops: { pos: LatLon; marker: L.Marker }[] = [];
+    let step = -1;
+    const showRoute = (slug: string) => {
+      routeLayer.clearLayers();
+      stops = [];
+      step = -1;
+      const route: [string, string[]][] = (routes[slug] ?? []).filter(([pl]: [string]) => coords[pl]);
+      el.classList.toggle('routing', route.length > 1);
+      steps.forEach((b) => (b.disabled = route.length < 2));
+      if (route.length < 2) return;
+      route.slice(1).forEach(([pl], i) => {
+        const poly = L.polyline(curve(coords[route[i][0]], coords[pl], 0.94), { renderer: routeRenderer, pane: 'route', color: '#3b2e22', weight: 4 });
+        poly.on('add', () => arrowHead(poly.getElement() as SVGElement, '#3b2e22'));
+        routeLayer.addLayer(poly);
+      });
+      const nums: Record<string, number[]> = {};
+      route.forEach(([pl], i) => (nums[pl] ??= []).push(i + 1));
+      route.forEach(([pl, who], i) => {
+        const icon = L.divIcon({ className: 'fmap-stop', html: `<span>${nums[pl].join(' · ')}</span>`, iconSize: [0, 0] });
+        const marker = L.marker(coords[pl], { icon, zIndexOffset: i }).bindPopup(
+          (placeByName[pl] ? placePhoto(placeByName[pl]) : '') + `<strong>${i + 1}. ${esc(pl)}</strong><br>${who.map(person).join('<br>')}`,
+          { maxHeight: 320 }
+        );
+        routeLayer.addLayer(marker);
+        stops.push({ pos: coords[pl], marker });
+      });
+      map.fitBounds(L.latLngBounds(stops.map((s) => s.pos)), { padding: [40, 40], maxZoom: 12 });
+    };
+    steps.forEach((b) =>
+      b.addEventListener('click', () => {
+        if (!stops.length) return;
+        step = Math.min(stops.length - 1, Math.max(0, step + Number(b.dataset.step)));
+        map.flyTo(stops[step].pos, Math.max(map.getZoom(), 11), { duration: 0.8 });
+        stops[step].marker.openPopup();
+      })
+    );
+    if (select) {
+      select.addEventListener('change', () => {
+        showRoute(select.value);
+        history.replaceState(null, '', select.value ? `?cesta=${encodeURIComponent(select.value)}` : location.pathname);
+      });
+      const wanted = new URLSearchParams(location.search).get('cesta');
+      if (wanted && routes[wanted]) {
+        select.value = wanted;
+        showRoute(wanted);
+      }
+    }
   }
 </script>
 
@@ -104,7 +236,16 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact });
   .fmap-legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; margin: 0.6rem 0; font-size: 0.9rem; }
   .fmap-legend label { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
   .fmap-legend .dot { width: 0.8rem; height: 0.8rem; border-radius: 50%; border: 1px solid #3b2e22; }
+  .fmap-legend .arrow { font-weight: 700; }
+  .fmap-route { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; margin: 0.4rem 0; font-size: 0.9rem; }
+  .fmap-route select { max-width: min(28rem, 100%); font: inherit; }
+  .fmap.routing .leaflet-overlay-pane path, .fmap.routing .leaflet-moves-pane path { opacity: 0.25; }
+  .fmap-stop span { position: absolute; transform: translate(-50%, -50%); background: #3b2e22; color: #fff; border-radius: 1rem;
+    padding: 0.1rem 0.45rem; font: 700 0.8rem system-ui, sans-serif; white-space: nowrap; box-shadow: 0 0 0 2px #fff; }
   .leaflet-popup-content { font-size: 0.85rem; line-height: 1.4; }
   .leaflet-popup-content .y { color: #6e6153; }
   .leaflet-popup-content .pl { border-left: 4px solid var(--c); padding-left: 0.35rem; }
+  .leaflet-popup-content .fmap-photo { width: 2rem; height: 2.4rem; object-fit: cover; border-radius: 4px; vertical-align: middle; margin: 0.15rem 0.35rem 0.15rem 0; }
+  .leaflet-popup-content .fmap-place-photo { display: block; width: 100%; max-height: 9rem; object-fit: cover; border-radius: 6px; }
+  .leaflet-popup-content .cap { display: block; font-size: 0.7rem; color: #6e6153; margin: 0.15rem 0 0.35rem; }
 </style>
