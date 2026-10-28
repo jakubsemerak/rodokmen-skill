@@ -43,7 +43,7 @@ po verzích v [CHANGELOG.md](CHANGELOG.md).
 
 ## Jak vypadá web
 Ukázkový web s vymyšlenou rodinou Novákových (260 předků v 11 generacích) má na úvodní stránce příběh rodu, zajímavosti,
-mapu, kde předci žili, osm rodů a vějíř předků. Další stránky: rodokmen po rodinách, karty osob, výřezy zápisů
+mapu, kde předci žili, osm rodů a vějíř předků. Další stránky: rodokmen po rodinách, rozklikávací stromový graf i se sourozenci, karty osob, výřezy zápisů
 s přepisem a překladem, „Co hledáme“ a deník hledání. **[Podívejte se na celou úvodní stránku ukázky →](docs/ukazka-web.png)**
 
 ## Co budete potřebovat
