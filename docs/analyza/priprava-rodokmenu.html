@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Příprava rodokmenu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&family=Spectral:wght@500;600&display=swap">
+<style>*{box-sizing:border-box}body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<style>
+/* Layout: one reading column like a register page; tables ruled like matrika columns, status as stamps. */
+:root {
+  --paper: #f4f6f5; --sheet: #ffffff; --ink: #1f2d2c; --muted: #5b6b69; --rule: #cfd8d6;
+  --accent: #7a2e3b; --ok: #2f6b45; --ok-bg: #e3f1e8; --todo: #8a5a12; --todo-bg: #f8eedb; --no: #5b6b69; --no-bg: #e8eceb;
+  --display: "Spectral", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #121918; --sheet: #182120; --ink: #e2e9e7; --muted: #9aaba8; --rule: #2e3c3a;
+  --accent: #e28a98; --ok: #8fd3a5; --ok-bg: #1d3427; --todo: #e8bf73; --todo-bg: #3a2e17; --no: #9aaba8; --no-bg: #26302f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #121918; --sheet: #182120; --ink: #e2e9e7; --muted: #9aaba8; --rule: #2e3c3a;
+  --accent: #e28a98; --ok: #8fd3a5; --ok-bg: #1d3427; --todo: #e8bf73; --todo-bg: #3a2e17; --no: #9aaba8; --no-bg: #26302f; color-scheme: dark }
+body { background: var(--paper); color: var(--ink); font: 16px/1.6 var(--body); }
+.wrap { max-width: 60rem; margin: 0 auto; padding-block: 2rem 4rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.7rem); margin: 0.2rem 0 0.6rem; font-weight: 600; }
+h2 { font-size: 1.55rem; margin: 2.6rem 0 0.6rem; padding-top: 0.8rem; border-top: 2px solid var(--ink); font-weight: 600; }
+h3 { font-size: 1.15rem; margin: 1.6rem 0 0.4rem; }
+p, li { max-width: 68ch; }
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--sheet); border: 1px solid var(--rule); padding: 0 0.25em; border-radius: 3px; }
+.eyebrow { font: 600 0.75rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.meta { color: var(--muted); font-size: 0.9rem; }
+.tldr { background: var(--sheet); border: 1px solid var(--rule); border-left: 4px solid var(--accent); padding: 0.9rem 1.1rem; margin: 1.2rem 0; }
+.tldr p { margin: 0.3rem 0; }
+.table { overflow-x: auto; margin: 0.8rem 0; border: 1px solid var(--rule); background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th { font: 600 0.72rem var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: left; }
+th, td { padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td + td, th + th { border-left: 1px solid var(--rule); }
+tr:last-child td { border-bottom: 0; }
+td.n { font-family: var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.st { display: inline-block; font: 600 0.72rem var(--mono); letter-spacing: 0.04em; padding: 0.1rem 0.45rem; border-radius: 3px; white-space: nowrap; border: 1px solid currentColor; }
+.st.ok { color: var(--ok); background: var(--ok-bg); }
+.st.todo { color: var(--todo); background: var(--todo-bg); }
+.st.no { color: var(--no); background: var(--no-bg); }
+.diagram { overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); padding: 1rem; margin: 0.8rem 0; }
+.diagram pre.mermaid { margin: 0; background: transparent; text-align: center; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
+.cols > div { min-width: 0; }
+ul.tight li { margin: 0.2rem 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+<p class="eyebrow">rodokmen-skill · analýza před začátkem rodokmenu · 28. 10. 2026</p>
+<h1>Příprava rodokmenu</h1>
+<p class="meta">Repozitář <code>sarsonj/rodokmen-skill</code> 0.5.0 → 0.5.1, větev <code>j.semerak/feature/GH-14-priprava-mapa-fotky</code> ve forku <code>jakubsemerak/rodokmen-skill</code>.</p>
+
+<div class="tldr">
+<p><strong>TLDR.</strong> Skill je v dobrém stavu a dá se začít. Před startem jsem opravil chybu, která se týká všech východočeských matrik: odkaz „otevřít v archivu“ vedl na první snímek svazku (#18).</p>
+<p>Na web jsem přidal mapu stěhování s „cestou předka“, portréty a fotky obcí a kostelů s licencí. Opravil jsem i tři úniky soukromých údajů na web a pád exportu, které našla revize kódu.</p>
+<p>Na vás: rozhodnout, co dál z doporučení dole. Rodokmen samotný ukládejte do <strong>soukromého</strong> repozitáře, fork skillu je veřejný.</p>
+</div>
+
+<h2>Jak skill funguje</h2>
+<p>Claude vede člověka od rozhovoru s rodinou přes digitalizované matriky až k webu. Všechna zjištění jdou do jedné sady dat v <code>data/</code>, z ní se kontroluje konzistence a generuje web. Je to jediný zdroj pravdy.</p>
+<div class="diagram"><pre class="mermaid">
+flowchart LR
+  A["Rozhovor s rodinou"] --> D["data/ (osoby.py, zaznamy.json, prepisy.json, mista.json)"]
+  B["Archivy: ARON, Třeboň, Porta fontium, eBadatelna, AHMP"] --> S["Snímek matriky"]
+  S --> V["Výřez + rámeček + přepis"]
+  V --> D
+  D --> K["kontrola.py"]
+  D --> E["export_web.py"]
+  E --> W["Astro web: vějíř, mapa, zápisy, příběh"]
+  W --> N["Netlify s rodinnou otázkou"]
+</pre></div>
+
+<h2>GitHub issues a otevřené PR</h2>
+<div class="table"><table>
+<thead><tr><th>#</th><th>Téma</th><th>Stav teď</th><th>Co s tím</th></tr></thead>
+<tbody>
+<tr><td class="n">18</td><td>ARON: odkaz vede na první snímek svazku</td><td><span class="st ok">opraveno</span></td><td>Ověřeno v prohlížeči: id PUBLISHED otevře 1/145, id TILE správně 2/145. <code>aron_img.py link</code> bere TILE, nový příkaz <code>aron_img.py opravit-odkazy</code> opraví staré odkazy.</td></tr>
+<tr><td class="n">21</td><td>Kramerius jen útržky, MZA bez prohlížeče</td><td><span class="st ok">opraveno</span></td><td><code>kramerius.py text &lt;PID&gt;</code> stáhne celý OCR text stránky. Návody: ročenky učitelů, Acta Publica (knihu najdete curlem, snímky jen v prohlížeči).</td></tr>
+<tr><td class="n">14</td><td>Putování rodu: mapa cest předků</td><td><span class="st ok">hotovo (mapa)</span></td><td>Šipky stěhování a cesta předka obec po obci. Vějíř obarvený podle krajů zatím ne.</td></tr>
+<tr><td class="n">17</td><td>Skrytá osoba (jen iniciály, bez předků)</td><td><span class="st todo">zvážit</span></td><td>Hodí se, pokud někdo z žijících nechce být na webu. Řešit před zveřejněním, ne teď.</td></tr>
+<tr><td class="n">12</td><td>Přehled hlaviček snímků svazku</td><td><span class="st todo">doporučeno</span></td><td>Zrychlí hledání roku a obce ve svazku bez rejstříku a šetří stahování. Udělat, až narazíme na velký svazek bez indexu.</td></tr>
+<tr><td class="n">15</td><td>Víc příběhů rodů</td><td><span class="st no">později</span></td><td>Až bude víc doložených rodů.</td></tr>
+<tr><td class="n">16</td><td>Kronika v PDF, perokresby z fotek</td><td><span class="st no">později</span></td><td>Výstup pro rodinu na konec projektu.</td></tr>
+<tr><td class="n">PR 13, 20</td><td>Stromový graf celé rodiny / strom předků</td><td><span class="st no">upstream</span></td><td>Neslučuji do forku. Až autor sloučí, převezmeme aktualizací.</td></tr>
+<tr><td class="n">PR 19</td><td>Statistiky a mapa domů (stabilní katastr)</td><td><span class="st no">upstream</span></td><td>Doplňuje naši mapu o úroveň domů. Počkat na sloučení.</td></tr>
+</tbody></table></div>
+
+<h2>Revize kódu</h2>
+<p>Nezávislá revize (subagent bez znalosti mých závěrů) prošla nástroje, export a šablonu webu. Našla 14 vad, každou ověřila reprodukcí nebo čtením kódu. Závažné jsem nechal opravit před startem. Drobné jsou zapsané a opravíme je, až na ně narazíme.</p>
+<div class="table"><table>
+<thead><tr><th>Vada</th><th>Dopad</th><th>Stav</th></tr></thead>
+<tbody>
+<tr><td>Kontrola citlivých zmínek četla jen příběh a zajímavosti; deník a „Co hledáme“ šly na web bez kontroly</td><td>únik soukromí</td><td><span class="st ok">opraveno</span></td></tr>
+<tr><td>Chyběly tvary „rozvedený“, „deprese“, „odsouzen“; nic nehlídalo adresu, telefon a celé datum u žijících</td><td>únik soukromí</td><td><span class="st ok">opraveno</span></td></tr>
+<tr><td>Import GEDCOM dával žijícím celé datum, místo, povolání a poznámku</td><td>únik soukromí</td><td><span class="st ok">opraveno</span></td></tr>
+<tr><td>Předek v rodokmenu dvakrát (SAME) s aliasem na neznámého rodiče nebo v řetězu shodil export</td><td>web se nesestaví</td><td><span class="st ok">opraveno</span></td></tr>
+<tr><td>Sňatek na stránce rodiny podle příjmení matky; u „(?)“ nebo prázdného jména špatný sňatek nebo pád</td><td>špatný údaj</td><td><span class="st ok">opraveno</span></td></tr>
+<tr><td>Import GEDCOM ztrácel „asi“ a „před“ u roků (ABT, BEF)</td><td>přesnost, kterou nemáme</td><td><span class="st ok">opraveno</span></td></tr>
+<tr><td>Některé zápisy roků („1680 - před 1740“ s krátkou pomlčkou, „* asi 1850“) web zjednoduší</td><td>drobnost</td><td><span class="st todo">zapsáno</span></td></tr>
+<tr><td>Předek dvakrát se dvěma partnery: odkaz „Jejich rodina“ může vést k té druhé</td><td>drobnost</td><td><span class="st todo">zapsáno</span></td></tr>
+<tr><td>Předek dvakrát v jednom rodu je na stránce rodu dvakrát</td><td>drobnost</td><td><span class="st todo">zapsáno</span></td></tr>
+<tr><td>Statistiky na plakátu vějíře počítají „matka neuvedena“</td><td>drobnost</td><td><span class="st todo">zapsáno</span></td></tr>
+<tr><td>Zápis svazků, rámečků a míst není atomický (přerušení = poškozený JSON)</td><td>drobnost, git to zachrání</td><td><span class="st todo">zapsáno</span></td></tr>
+</tbody></table></div>
+<p><strong>Druhé kolo:</strong> celou větev (10 commitů) prošel další nezávislý agent. Bez pádů a bez chyb v escapování HTML; ověřil web v prohlížeči i okrajové případy. Našel dvě mezery v soukromí: žijící osoba jen s křtem v GEDCOM a citlivé slovo v popisu rodu. Dál nepřesnou atribuci fotek z Commons a neaktuální číslo verze. Vše opraveno ve verzi 0.5.1 a ověřeno na ukázkovém projektu i na aktualizaci projektu z verze 0.5.0.</p>
+
+<h2>Mapa stěhování a cesta předka</h2>
+<p>Export každé osobě určí „domov“ a ze dvojic rodič–dítě v linii spočítá šipky. Na mapě jsou oblouky v barvě rodu. Výběr předka (nebo odkaz <code>/mapa/?cesta=…</code> ze stránky osoby) ukáže jeho cestu obec po obci až k výchozí osobě, s čísly zastávek a krokováním.</p>
+<div class="diagram"><pre class="mermaid">
+flowchart TD
+  F["Fakta osoby v osoby.py"] --> Q{"Obec z mista.json v narození?"}
+  Q -->|"ano"| H["Domov = ta obec"]
+  Q -->|"ne"| R{"Ve volném textu, sňatku, úmrtí?"}
+  R -->|"ano"| H
+  R -->|"ne"| X["Bez domova: na mapě chybí"]
+  H --> M["Šipka: domov rodiče → domov dítěte"]
+  M --> L["Mapa: oblouky podle rodů"]
+  H --> C["Cesta předka: obce od nejstaršího k výchozí osobě"]
+</pre></div>
+<ul class="tight">
+<li><strong>Co z toho plyne pro sběr dat:</strong> do faktu o narození vždy psát obec (<code>* 1862 Ostřetín čp. 23</code>) a každou obec přidat do <code>mista.json</code>.</li>
+<li>Oblouk je vždy vpravo od směru cesty, takže tam a zpět mezi sousedními vesnicemi dá smyčku místo jedné čáry. To byla past popsaná v #14.</li>
+<li>Vyzkoušeno na ukázkové rodině: 261 osob, 66 tras stěhování, build projde, mobil i počítač.</li>
+<li><strong>Historická mapa jako podklad:</strong> volné dlaždice II. a III. vojenského mapování (CENIA) existují jen v souřadnicích S-JTSK. Do Leafletu by bylo potřeba Proj4Leaflet a samostatné zobrazení. Navrhuji to jako volbu ve <code>web.json</code>, výchozí vypnutou. Zatím nedělám.</li>
+</ul>
+
+<h2>Fotky</h2>
+<div class="cols">
+<div>
+<h3>Automaticky</h3>
+<ul class="tight">
+<li><strong>Obce a kostely:</strong> nový nástroj <code>foto_mista.py "Obec"</code>. Hledá na Wikidatech a Wikimedia Commons, stejnojmenné obce rozliší podle souřadnic a ukládá autora a licenci. Popis je na webu vždy pod fotkou.</li>
+<li>Vyzkoušeno: pro Horní Roveň našel kostel sv. Kateřiny a 3 kaple (CC BY-SA).</li>
+</ul>
+</div>
+<div>
+<h3>Ručně v prohlížeči</h3>
+<ul class="tight">
+<li><strong>Portréty předků:</strong> nejdřív rodina (alba, parte, náhrobky), pak Krev legionáře (přes 20 tisíc portrétů), databáze VÚA a Kramerius (parte, jen veřejné).</li>
+<li><strong>Hroby:</strong> pražské hřbitovy (CAPTCHA zadáváte vy), HROBIS, válečné hroby. Find a Grave a BillionGraves automatické dotazy blokují.</li>
+<li>Na webu: <code>"portret": true</code> v <code>dokumenty.json</code> dá portrét nahoru na stránku osoby a do okének mapy.</li>
+</ul>
+</div>
+</div>
+
+<h2>Knowledge base podle Karpathyho?</h2>
+<p>Karpathy popisuje „LLM wiki“: neměnné zdroje, wiki udržovanou modelem, schéma v CLAUDE.md a operace ingest, query a lint. Skill tento vzor už z velké části používá, jen místo volného markdownu má strukturovaná data. Pro rodokmen je to lepší: Kekulého čísla a vazby se dají kontrolovat strojově a web vzniká z jednoho zdroje pravdy.</p>
+<div class="table"><table>
+<thead><tr><th>Karpathy</th><th>Skill dnes</th><th>Mezera</th></tr></thead>
+<tbody>
+<tr><td>raw sources</td><td><code>dokumenty/</code>, snímky v <code>pracovni/</code>, <code>zdroje/</code></td><td>Chybí přehled, které rodinné dokumenty jsou vytěžené a co z nich plyne.</td></tr>
+<tr><td>wiki</td><td><code>osoby.py</code>, <code>zaznamy.json</code>, <code>prepisy.json</code> → web s prolinky</td><td>Chybí stránky pro <strong>fary a svazky</strong>: co v nich bylo prohledáno a co ne.</td></tr>
+<tr><td>schema</td><td><code>SKILL.md</code>, <code>CLAUDE.md</code>, <code>STAV.md</code></td><td>Žádná.</td></tr>
+<tr><td>log</td><td><code>research_log.md</code></td><td>Žádná.</td></tr>
+<tr><td>lint</td><td><code>kontrola.py</code>, <code>napady.py</code></td><td>Rozpory věku a dat (věk při sňatku, matka mladší 14 let), osiřelé stopy v deníku.</td></tr>
+</tbody></table></div>
+<p><strong>Doporučení:</strong> nepřestavovat na wiki, druhý zdroj pravdy by se rozcházel. Převzít dvě věci: (1) <code>data/svazky.json</code> doplnit o prohledané rozsahy, aby šlo odpovědět „kde už jsme hledali Nováky“, a (2) rozšířit <code>kontrola.py</code> o věcné rozpory v datech.</p>
+
+<h2>Jak budeme pracovat</h2>
+<div class="diagram"><pre class="mermaid">
+sequenceDiagram
+  participant U as "Vy"
+  participant C as "Claude (hlavní)"
+  participant P as "Pomocníci (Sonnet)"
+  participant R as "Revize (nezávislý agent)"
+  participant G as "Soukromý repozitář"
+  U->>C: "Rodina, dokumenty, rozhodnutí"
+  C->>P: "Kolo hledání ve svazcích"
+  P-->>C: "Nálezy se snímky a souřadnicemi"
+  C->>C: "Ověření na snímku, zápis do data/"
+  C->>R: "Diff kola: zápisy, přepisy, osoby"
+  R-->>C: "Nálezy revize"
+  C->>U: "Sporná čtení k rozhodnutí"
+  C->>G: "Commit a push po kole"
+</pre></div>
+<ul class="tight">
+<li><strong>Revize každého kola:</strong> po kole hledání projde nezávislý agent diff <code>data/</code> proti výřezům: jména, data, čísla domů, vazby rodič–dítě. Nálezy opravím, sporné věci dostanete k rozhodnutí.</li>
+<li><strong>Kam pushovat:</strong> změny skillu do forku <code>jakubsemerak/rodokmen-skill</code> (veřejný). Rodokmen do nového <strong>soukromého</strong> repozitáře, protože obsahuje údaje žijících lidí.</li>
+<li><strong>Před startem na tomto Macu:</strong> chybí ImageMagick (<code>brew install imagemagick</code>), bez něj nejdou výřezy. Moravské matriky (MZA) potřebují prohlížeč.</li>
+</ul>
+
+<h2>Další doporučení</h2>
+<div class="table"><table>
+<thead><tr><th>Návrh</th><th>Proč</th><th>Kdy</th></tr></thead>
+<tbody>
+<tr><td>Prohledané rozsahy u svazků</td><td>Hledání neopakovat; deník je dnes jen tabulka.</td><td>Před velkými koly</td></tr>
+<tr><td>Rozpory věku a dat v <code>kontrola.py</code></td><td>Chytí záměnu dvou Janů ze stejné vsi.</td><td>Brzy</td></tr>
+<tr><td>Nástroj na hlavičky snímků (#12)</td><td>Rychlé půlení svazků bez rejstříku.</td><td>Podle potřeby</td></tr>
+<tr><td>Historická mapa jako volba</td><td>Obce v době předků; potřebuje S-JTSK.</td><td>Až bude web</td></tr>
+<tr><td>Skrytá osoba (#17)</td><td>Soukromí žijících, kteří nechtějí na web.</td><td>Před zveřejněním</td></tr>
+<tr><td>Poslat opravy autorovi skillu</td><td>#18 a úniky soukromí se týkají všech uživatelů.</td><td>Po vaší kontrole</td></tr>
+</tbody></table></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.15.0/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "neutral" });</script>
+</body>
+</html>
