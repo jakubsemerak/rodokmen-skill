@@ -199,10 +199,11 @@ def main():
         dd = next((year_q(d) for t, d, p, x in ev if t == "DEAT" and year(d)), "")
         y = f"{b}{' – ' if ' ' in dd else '–'}{dd}" if b and dd else (f"* {b}" if b else (f"† {dd}" if dd else ""))
         bc = b or next((year_q(d) for t, d, p, x in ev if t == "CHR" and year(d)), "")   # bez narození stačí křest
-        living = bc and not any(t in ("DEAT", "BURI") for t, d, p, x in ev) and year(bc) > datetime.date.today().year - 100
-        if as_py and living:   # žijící: na web jen jméno a rok narození (reference/soukromi.md)
-            yl = f"* {year(bc)}"
-            print(f' {k}: dict(n={name(ind)!r}, y={yl!r}, st="fam", f={[yl]!r}, r=[], note="Žijící – údaje jen základní."),')
+        born = year(bc) or min((year(d) - 20 for t, d, p, x in ev if year(d)), default=None)   # odhad podle sňatku apod.
+        living = not any(t in ("DEAT", "BURI") for t, d, p, x in ev) and (born is None or born > datetime.date.today().year - 100)
+        if as_py and living:   # žijící (i bez jakéhokoli roku): na web jen jméno a rok narození (reference/soukromi.md)
+            yl = f"* {year(bc)}" if bc else ""
+            print(f' {k}: dict(n={name(ind)!r}, y={yl!r}, st="fam", f={[yl] if yl else []!r}, r=[], note="Žijící – údaje jen základní."),')
         elif as_py:
             note = " ".join(notes)   # !r = platný Python i pro uvozovky a „\“ ve jménech a poznámkách (osoby.py se spouští přes exec)
             print(f' {k}: dict(n={name(ind)!r}, y={y!r}, st="fam", f={facts!r}, r=[]' + (f', note={note[:300]!r}' if note else "") + "),")
