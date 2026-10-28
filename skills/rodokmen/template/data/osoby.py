@@ -13,6 +13,8 @@
 #        (* narození, × sňatek, † úmrtí – podle těchto značek web pozná sňatky a místa pro mapu)
 #   r    klíče zápisů z data/zaznamy.json, které osobu dokládají
 #   note poznámka: proč je údaj nejistý, rozpory, odkud se vzal
+#   soukrome  seznam soukromých údajů, které na web nikdy nejdou (adresa, nemoc, co rodina řekla důvěrně);
+#        zůstanou jen v projektu (vystupy/rodokmen.sqlite)
 #   sex  jen u osoby 1: "M" nebo "F" (u ostatních plyne z čísla)
 # Žijící lidé: jen jméno a rok narození (soukromí), note="Žijící – údaje jen základní."
 # Neznámý otec nemanželského dítěte: dict(n="otec neuveden", st="unk", f=[], note="…")

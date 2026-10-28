@@ -6,6 +6,11 @@
 - Citlivé věci z nedávné minulosti (sebevraždy, věznění, nemoci) – zeptej se uživatele, jestli a jak je zmínit.
 - Matriční údaje starší než lhůty jsou veřejné, ale ohleduplnost platí i pro ně (zbytečně nezesměšňovat).
 
+## Soukromé údaje v projektu
+Co má zůstat jen v projektu (adresa, nemoc, důvěrné sdělení rodiny), patří k osobě do `soukrome=[…]` v `osoby.py`,
+v deníku na řádek s `<!-- soukromé -->` na konci. Na web nejde, dotazovat se dá v `vystupy/rodokmen.sqlite`;
+`kontrola.py` hlásí „SOUKROMÉ“, když stejný text stojí i v publikovaném textu. Pozor: projekt v gitu je sdílí dál.
+
 ## Před zveřejněním webu projdi s uživatelem
 `python3 -I tools/kontrola.py` hlásí `CITLIVÉ` u textů z posledních ~100 let (sebevražda, nemoc, rozvod, dluhy, nemanželské
 dítě…), které jdou na web – v poznámkách osob, ve „Co hledáme“ (`ISSUES`), u bočních příbuzných, v zajímavostech a v příběhu.

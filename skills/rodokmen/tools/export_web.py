@@ -62,7 +62,8 @@ def record_rows():
 
 
 def strip_comments(md):
-    """Poznámky <!-- … --> v markdownu jsou pro Clauda, ne pro web."""
+    """Poznámky <!-- … --> v markdownu jsou pro Clauda, ne pro web; řádek s <!-- soukromé --> nejde na web celý."""
+    md = re.sub(r"^.*<!--\s*soukrom[ée]\s*-->.*(?:\n|$)", "", md, flags=re.M)
     return re.sub(r"<!--.*?-->\n?", "", md, flags=re.S)
 
 

@@ -165,6 +165,33 @@ class Ukazka(unittest.TestCase):
         self.assertEqual(db.execute("SELECT count(*) FROM udalosti").fetchone()[0], len(s["events"]))
         db.close()
 
+    def test_soukrome_nejde_na_web(self):
+        self.osoby("'n': 'Barbora Malá', 'y': '1862–1930',", "'n': 'Barbora Malá', 'y': '1862–1930', 'soukrome': ['TAJNÁ-POZNÁMKA-XYZ léčebna'],")
+        with open(os.path.join(self.p, "data", "research_log.md"), "a", encoding="utf-8") as f:
+            f.write("| 98 | 2026-10-02 | rodina | – | Karel | SOUKROMÝ-ŘÁDEK bydlí Lipová 3 | – | <!-- soukromé -->\n")
+            f.write("| 99 | 2026-10-02 | rodina | – | Karel | VEŘEJNÝ-ŘÁDEK | – | <!-- pro Clauda -->\n")
+        self.export()
+        web = pathlib.Path(self.p, "web")
+        texts = [f.read_text(encoding="utf-8", errors="ignore") for f in web.rglob("*")
+                 if f.is_file() and "node_modules" not in f.parts and f.suffix in (".json", ".md", ".html", ".js", ".svg", ".conf")]
+        self.assertFalse([t for t in texts if "TAJNÁ-POZNÁMKA-XYZ" in t])
+        denik = (web / "src" / "generated" / "denik.md").read_text(encoding="utf-8")
+        self.assertNotIn("SOUKROMÝ-ŘÁDEK", denik)
+        self.assertIn("VEŘEJNÝ-ŘÁDEK", denik)
+        self.assertNotIn("pro Clauda", denik)
+        db = sqlite3.connect(os.path.join(self.p, "vystupy", "rodokmen.sqlite"))
+        self.assertIn("TAJNÁ-POZNÁMKA-XYZ", db.execute("SELECT soukrome FROM osoby WHERE k = 17").fetchone()[0])
+        db.close()
+        k = run(self.p, "kontrola.py")
+        self.assertNotIn("SOUKROMÉ (", k)
+        self.assertNotIn("Lipová", k)
+
+    def test_kontrola_soukrome_v_publikovanem_textu(self):
+        self.osoby("'n': 'Barbora Malá', 'y': '1862–1930',", "'n': 'Barbora Malá', 'y': '1862–1930', 'soukrome': ['léčila se v Kosmonosích'],")
+        with open(os.path.join(self.p, "data", "zajimavosti.md"), "a", encoding="utf-8") as f:
+            f.write("\n## Babička\nBarbora Malá léčila se v Kosmonosích.\n")
+        self.assertIn("SOUKROMÉ (zajimavosti.md): „léčila se v Kosmonosích“ je v osoby.py u osoby 17", run(self.p, "kontrola.py"))
+
     def test_domov_z_volneho_textu_kdyz_narozeni_bez_obce(self):
         self.osoby("'f': ['* 1862 Ostřetín čp. 23',", "'f': ['* 1862', 'bydlela v Býšti',")
         _, s = self.export()

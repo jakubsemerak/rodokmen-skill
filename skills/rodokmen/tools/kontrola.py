@@ -172,8 +172,19 @@ def main():
     texty += [(f"místo {n}", e.get("foto_popis") or "") for n, e in jload("mista.json", {}).items() if isinstance(e, dict)]
     for f in ("zajimavosti.md", "pribeh.md", "research_log.md", "archivni_dotazy.md"):
         if os.path.exists(os.path.join(DATA, f)):
-            md = re.sub(r"<!--.*?-->", "", open(os.path.join(DATA, f), encoding="utf-8").read(), flags=re.S)
+            md = re.sub(r"^.*<!--\s*soukrom[ée]\s*-->.*(?:\n|$)", "", open(os.path.join(DATA, f), encoding="utf-8").read(), flags=re.M)
+            md = re.sub(r"<!--.*?-->", "", md, flags=re.S)
             texty += [(f, odst) for odst in re.split(r"\n\s*\n|\n(?=\|)", md)]
+    soukrome = {}
+    for k, p in P.items():
+        s = p.get("soukrome") or [] if isinstance(p, dict) else []
+        for t in [s] if isinstance(s, str) else s:
+            if isinstance(t, str) and len(t.strip()) >= 4:
+                soukrome[t.strip()] = k
+    for kde, text in texty:
+        for t, k in soukrome.items():
+            if t.lower() in text.lower():
+                warn.append(f"SOUKROMÉ ({kde}): „{t}“ je v osoby.py u osoby {k} jako soukromé (soukrome), ale stejný text jde na web – smaž ho tam")
     for kde, text in texty:
         if not recent(text):
             continue

@@ -32,6 +32,9 @@ P = {
   Názvy obcí ve faktech používá mapa (`mista.json` → `re`).
 - `r` klíče zápisů ze `zaznamy.json`. `st` viz `matriky.md`: `doc` přečteno v matrice, `prob` pravděpodobné,
   `fam` od rodiny (i strom, který si rodina vede sama, např. GEDCOM z jejího MyHeritage), `mh` cizí strom z internetu, `unk`.
+- `soukrome` – seznam soukromých údajů, které na web **nikdy nejdou** (adresa, přesné datum narození žijícího, nemoc,
+  co rodina řekla důvěrně): `soukrome=["bydlí Masarykova 12", "léčil se v Kosmonosích"]`. Export je nepublikuje, najdeš je
+  jen v `vystupy/rodokmen.sqlite`; `kontrola.py` upozorní, když se stejný text objeví v něčem, co jde na web.
 - `LINES = {8: ("Novákové", "Kováři z Holic…"), …}` – jen čísla 8–15; název rodu = příjmení v množném čísle.
 - `SIDE` – sourozenci a další příbuzní: `dict(k=<číslo předka>, n="Josef Novák (1865–1920)", t="text", r=[klíče])`.
 - `ISSUES` – dvojice `("Otázka", "Vyřešeno: … / Hypotéza: … / Otevřené: …")` → stránka „Co hledáme“ (vyřešené se skryjí).
@@ -102,6 +105,8 @@ Viz `web.md`.
 - `pribeh.md` – „Příběh <hlavního rodu>“: frontmatter `title`, `lead` + kapitoly `##`; když soubor neexistuje,
   položka menu se skryje. Jak psát: `pribehy.md`.
 - Poznámky pro Clauda v markdownu piš jako `<!-- … -->` – na web nejdou.
+- Řádek deníku se soukromým údajem (adresa žijících, citlivé sdělení rodiny) označ na konci `<!-- soukromé -->` –
+  na web („Výzkumný deník“) nejde celý řádek, v projektu zůstává.
 - `archivni_dotazy.md`, `udaje_od_rodiny.md` – volný text.
 
 ## Databáze pro dotazy (`vystupy/rodokmen.sqlite`, `web/public/data/rodokmen.json`)
