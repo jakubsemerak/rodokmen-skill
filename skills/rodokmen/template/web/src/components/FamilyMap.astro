@@ -113,7 +113,8 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
       el.addEventListener('touchmove', (e) => { if (e.touches.length === 1) showHint(); }, { passive: true });
       el.addEventListener('touchend', () => map.dragging.disable(), { passive: true });
     }
-    L.tileLayer(tiles.url, { maxZoom: tiles.maxZoom, attribution: tiles.attribution }).addTo(map);
+    // jen původ webu: omezení klíče Mapy.com porovnává referrer bez cesty a cesta (/osoba/…) by prozradila stránku
+    L.tileLayer(tiles.url, { maxZoom: tiles.maxZoom, attribution: tiles.attribution, referrerPolicy: 'origin' }).addTo(map);
     if (tiles.logo) {
       const Logo = L.Control.extend({
         onAdd() {
