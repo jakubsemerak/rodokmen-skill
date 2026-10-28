@@ -192,6 +192,18 @@ class Ukazka(unittest.TestCase):
             f.write("\n## Babička\nBarbora Malá léčila se v Kosmonosích.\n")
         self.assertIn("SOUKROMÉ (zajimavosti.md): „léčila se v Kosmonosích“ je v osoby.py u osoby 17", run(self.p, "kontrola.py"))
 
+    def test_kontrola_mapy_cz_bez_klice(self):
+        path = pathlib.Path(self.p, "data", "web.json")
+        cfg = json.loads(path.read_text(encoding="utf-8"))
+        cfg["mapa"] = {"podklad": "mapy.cz"}
+        path.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+        self.assertIn("chybí mapa.klic", run(self.p, "kontrola.py"))
+        cfg["mapa"]["klic"] = "TESTKEY"
+        path.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+        self.assertNotIn("mapa.klic", run(self.p, "kontrola.py"))
+        _, s = self.export()
+        self.assertEqual(s["config"]["mapa"]["klic"], "TESTKEY")
+
     def test_domov_z_volneho_textu_kdyz_narozeni_bez_obce(self):
         self.osoby("'f': ['* 1862 Ostřetín čp. 23',", "'f': ['* 1862', 'bydlela v Býšti',")
         _, s = self.export()

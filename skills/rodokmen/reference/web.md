@@ -27,7 +27,8 @@ Náhled spouštěj na pozadí a uživateli pošli odkaz. Vzhled si ověř sám (
  "prihlaseni": {"uvod": "Tenhle web je jen pro rodinu.", "otazka": "Jak se jmenoval pes u babičky v Holicích?", "odpoved": "Alík"},
  "uvod": {"nadpis": "Lákavý nadpis", "odstavce": ["2–3 věty, které chytí"], "foto": "klic_obrazku_ve_vyrezech", "foto_popis": "…"},
  "pribeh": {"menu": "Příběh Nováků", "rod": 8, "tlacitko": "Přečíst příběh Nováků"},
- "zajimavosti_na_uvodu": [{"nadpis": "Nejstarší předek", "text": "Kovář Jan, asi 1825."}]
+ "zajimavosti_na_uvodu": [{"nadpis": "Nejstarší předek", "text": "Kovář Jan, asi 1825."}],
+ "mapa": {"podklad": "osm"}
 }
 ```
 - `kontakt.jmeno` je ve 3. pádě („Napište Petrovi na …“).
@@ -43,6 +44,10 @@ Náhled spouštěj na pozadí a uživateli pošli odkaz. Vzhled si ověř sám (
 - `pribeh`: `menu` a `tlacitko` pojmenuj podle hlavního rodu („Příběh Novákových“), `rod` = číslo rodu (8–15).
   Bez vyplněného `uvod` ukáže úvodní stránka aspoň název a `lead` příběhu. Viz `pribehy.md`.
 - Šablona `web.json` je prázdná – název nastav hned, jak znáš příjmení výchozí osoby (`kontrola.py` hlásí zbytky ukázky).
+- `mapa.podklad`: `osm` (výchozí, OpenStreetMap bez klíče), `mapy.cz` (základní mapa Mapy.com) nebo `mapy.cz-outdoor`
+  (turistická). Pro Mapy.com založ uživatel účet na developer.mapy.com a API klíč dá do `mapa.klic`. **Klíč je na webu
+  veřejný** (prohlížeč ho posílá s každou dlaždicí) – v účtu Mapy.com ho ať omezí na doménu webu (a `localhost` pro
+  náhled). Bez klíče web použije OpenStreetMap a `kontrola.py` upozorní. Klíč nikdy nepiš do kódu webu, jen do `web.json`.
 - `citlive_schvaleno`: seznam úryvků textu, které uživatel na webu schválil (např. `["oběsil se ve stodole"]`) –
   `kontrola.py` je pak nehlásí jako `CITLIVÉ`. Úryvek musí obsahovat hlášené slovo; když se text změní, hlásí se znovu.
 

@@ -128,6 +128,12 @@ def main():
     if not (cfg.get("prihlaseni") or {}).get("odpoved") and not (cfg.get("prihlaseni") or {}).get("otevreny"):
         warn.append("web.json: není nastavená odpověď na přihlašovací otázku – nasazení webu skončí chybou")
 
+    mapa = cfg.get("mapa") or {}
+    if mapa.get("podklad", "osm") not in ("osm", "mapy.cz", "mapy.cz-outdoor"):
+        warn.append(f"web.json: mapa.podklad „{mapa.get('podklad')}“ neznám – použij osm, mapy.cz nebo mapy.cz-outdoor")
+    elif str(mapa.get("podklad", "")).startswith("mapy.cz") and not mapa.get("klic"):
+        warn.append("web.json: mapa.podklad je mapy.cz, ale chybí mapa.klic (API klíč z developer.mapy.com) – mapa bude z OpenStreetMap")
+
     if re.search(r"Novák|Petrovi", json.dumps(cfg, ensure_ascii=False)) and "Novák" not in P.get(1, {}).get("n", ""):
         warn.append("web.json: jsou v něm ještě ukázkové texty (Novákovi) – nastav název, příběh a kontakt")
 
@@ -165,7 +171,7 @@ def main():
     texty += [(f"boční příbuzný {s.get('n')}", s.get("n", "") + " " + s.get("t", "")) for s in SIDE]
     texty += [("HYPOTEZY", " ".join(strings(h))) for h in ns.get("HYPOTEZY", [])]
     texty += [(f"LINES {k}", " ".join(strings(v))) for k, v in LINES.items()]
-    texty += [("web.json", t) for kk, v in cfg.items() if kk not in ("prihlaseni", "citlive_schvaleno") for t in strings(v)]
+    texty += [("web.json", t) for kk, v in cfg.items() if kk not in ("prihlaseni", "citlive_schvaleno", "mapa") for t in strings(v)]
     texty += [(f"zápis {z.get('klic')}", " ".join(strings([z.get("nazev"), z.get("shrnuti"), z.get("datum")]))) for z in zaz]
     texty += [(f"přepis {kk}", " ".join(strings(v.get("cs", "")))) for kk, v in prep.items() if isinstance(v, dict)]
     texty += [("dokumenty.json", " ".join(strings(d.get("popis", "")))) for d in jload("dokumenty.json", []) if isinstance(d, dict)]
