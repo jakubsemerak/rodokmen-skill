@@ -256,6 +256,13 @@ def main():
                 people[slugs[k]]["records"] = list(dict.fromkeys(people[slugs[k]]["records"] + [r for r in P.get(a, {}).get("r", []) if r in recs]))
             people[slugs[k]]["facts"] = [f for f in people[slugs[k]]["facts"] if not f.startswith("TÁŽ OSOBA")]
 
+    def surname(k):   # bez „(?)“; prázdné jméno → ""
+        w = re.sub(r"\([^)]*\)|\?", " ", P.get(k, {}).get("n", "")).split()
+        return w[-1] if w and not placeholder(P[k]) else ""
+
+    def year1(x):
+        return next(iter(re.findall(r"\d{4}", x)), None)
+
     families = {}
     for k in sorted(P):
         f, m = 2 * k, 2 * k + 1
@@ -263,9 +270,10 @@ def main():
             continue
         fs, ms = slugs.get(f), slugs.get(m)
         fid = "-a-".join(x for x in (fs, ms) if x) if fs and ms else (fs or ms) + "-rodina"
-        surname = (P[m]["n"].split()[-1] if m in P else "").strip("()?")
-        mfacts = [x for x in P.get(f, {}).get("f", []) + P.get(m, {}).get("f", []) if x.startswith("×")]
-        marriage = [x for x in mfacts if surname and surname[:5] in x] or mfacts
+        ff, mf = ([x for x in P.get(c, {}).get("f", []) if x.startswith("×")] for c in (f, m))
+        sf, sm = surname(f)[:5], surname(m)[:5]
+        both = [x for x in ff if any(year1(x) and year1(x) == year1(y) for y in mf)]   # stejný rok sňatku u otce i matky
+        marriage = [x for x in ff + mf if sm and sm in x] or [x for x in mf if sf and sf in x] or both or ff + mf
         frec = P.get(f, {}).get("r", []) + P.get(m, {}).get("r", [])
         child_rec = [r for r in P[k].get("r", []) if r in recs and recs[r]["kind"] == "N"]
         rlist = [r for r in dict.fromkeys(frec) if r in recs and recs[r]["kind"] == "O"] + child_rec
