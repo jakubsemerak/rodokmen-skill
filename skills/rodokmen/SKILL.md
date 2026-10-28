@@ -185,7 +185,7 @@ Podrobně `reference/web.md`. Ve zkratce:
 2. Nastav `data/web.json`: název, úvod, kontakt a **přihlašovací otázku a odpověď** (web je jen pro rodinu).
 3. Po každé změně dat: `npm run data && npm run build`. Hlášky `POZOR: nefunkční odkaz` oprav hned. Po větším kole
    zkontroluj i texty úvodu ve `web.json` (`uvod`, `zajimavosti_na_uvodu`) – zastarávají.
-4. Mapa: každou obec z faktů přidej do `mista.json` (`kontrola.py` hlásí chybějící) – z nich se počítá stěhování a cesta
+4. Mapa: každou obec z faktů přidej do `mista.json` (`kontrola.py` hlásí chybějící obce narození) – z nich se počítá stěhování a cesta
    předka. K hlavním obcím nabídni fotky obce a kostela (`foto_mista.py`), fotku si před uložením prohlédni.
 5. Před zveřejněním projdi s uživatelem `reference/soukromi.md` (co na webu bude, žijící lidé, hlášky `CITLIVÉ`
    z `kontrola.py`; schválené zapiš do `web.json` → `citlive_schvaleno`).
