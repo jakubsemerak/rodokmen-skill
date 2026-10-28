@@ -100,14 +100,15 @@ def main():
     if re.search(r"Novák|Petrovi", json.dumps(cfg, ensure_ascii=False)) and "Novák" not in P.get(1, {}).get("n", ""):
         warn.append("web.json: jsou v něm ještě ukázkové texty (Novákovi) – nastav název, příběh a kontakt")
 
-    # Citlivé věci, které jdou na web: ISSUES („Co hledáme“), poznámky a fakta osob, boční příbuzní, texty.
-    citlive = re.compile(r"sebevra|vzal[a]? si život|oběsil|zastřelil[a]? se|utopil[a]? se|alkohol|vězen|kriminál|"
-                         r"rozvod|rozvedl|psychiatr|léčebn|duševn|rakovin|nemanželsk|cizoložst|dluh|exekuc|interrupc|potrat", re.I)
+    # Citlivé věci, které jdou na web: všechny texty, které export_web.py publikuje.
+    citlive = re.compile(r"sebevra|vzal[a]? si život|oběsil|zastřelil[a]? se|utopil[a]? se|alkohol|vězen|vězn|kriminál|odsouz|"
+                         r"rozvod|rozvedl|rozveden|psychiatr|léčebn|duševn|depres|rakovin|nemanželsk|cizoložst|dluh|exekuc|"
+                         r"interrupc|potrat", re.I)
 
     hranice = datetime.date.today().year - 100   # posledních ~100 let; staré matriční údaje (nemanželské dítě v 18. stol.) nevadí
 
-    def recent(text):
-        return any(int(y) >= hranice for y in re.findall(r"\b(19\d\d|20\d\d)\b", text))
+    def recent(text):   # bez dat zápisu do deníku (2026-01-01)
+        return any(int(y) >= hranice for y in re.findall(r"\b(19\d\d|20\d\d)\b(?!-\d\d-)", text))
     schvaleno = [s for s in (cfg.get("citlive_schvaleno") if isinstance(cfg.get("citlive_schvaleno"), list) else [])
                  if isinstance(s, str) and len(s.strip()) >= 3]
 
@@ -119,15 +120,28 @@ def main():
                     return True
                 i = text.find(s, i + 1)
         return False
-    texty = [("ISSUES", i if isinstance(i, str) else " ".join(i)) for i in ns.get("ISSUES", [])]
+
+    def strings(x):
+        if isinstance(x, str):
+            return [x]
+        vals = x.values() if isinstance(x, dict) else x if isinstance(x, (list, tuple)) else []
+        return [s for v in vals for s in strings(v)]
+    texty = [("ISSUES", " ".join(strings(i))) for i in ns.get("ISSUES", [])]
     for k, p in P.items():
         text = " ".join(p.get("f", [])) + " " + p.get("note", "")
         roky = [int(y) for y in re.findall(r"\b1[5-9]\d\d|20\d\d\b", p.get("y", "") + " " + text)]
         texty.append((f"osoba {k}", text + (f" {hranice}" if roky and min(roky) >= 1870 or k < 8 else "")))
     texty += [(f"boční příbuzný {s.get('n')}", s.get("n", "") + " " + s.get("t", "")) for s in SIDE]
-    for f in ("zajimavosti.md", "pribeh.md"):
+    texty += [("HYPOTEZY", " ".join(strings(h))) for h in ns.get("HYPOTEZY", [])]
+    texty += [("web.json", t) for kk, v in cfg.items() if kk not in ("prihlaseni", "citlive_schvaleno") for t in strings(v)]
+    texty += [(f"zápis {z.get('klic')}", " ".join(strings([z.get("nazev"), z.get("shrnuti"), z.get("datum")]))) for z in zaz]
+    texty += [(f"přepis {kk}", " ".join(strings(v.get("cs", "")))) for kk, v in prep.items() if isinstance(v, dict)]
+    texty += [("dokumenty.json", " ".join(strings(d.get("popis", "")))) for d in jload("dokumenty.json", []) if isinstance(d, dict)]
+    texty += [(f"místo {n}", e.get("foto_popis") or "") for n, e in jload("mista.json", {}).items() if isinstance(e, dict)]
+    for f in ("zajimavosti.md", "pribeh.md", "research_log.md", "archivni_dotazy.md"):
         if os.path.exists(os.path.join(DATA, f)):
-            texty += [(f, odst) for odst in open(os.path.join(DATA, f), encoding="utf-8").read().split("\n\n")]
+            md = re.sub(r"<!--.*?-->", "", open(os.path.join(DATA, f), encoding="utf-8").read(), flags=re.S)
+            texty += [(f, odst) for odst in re.split(r"\n\s*\n|\n(?=\|)", md)]
     for kde, text in texty:
         if not recent(text):
             continue
@@ -136,6 +150,22 @@ def main():
             warn.append(f"CITLIVÉ ({kde}): „…{text[max(0, m.start() - 40):m.end() + 40].strip()}…“ – jde na web; "
                         f"zeptej se uživatele, jestli to tam smí být (reference/soukromi.md); když ano, "
                         f"přidej úryvek textu s tím slovem do web.json „citlive_schvaleno“")
+
+    # Žijící lidé: na webu jen jméno a rok narození. Hlídá jen osoby v P (ne boční příbuzné ani volný text).
+    osobni = re.compile(r"\b\d{1,2}\.\s*\d{1,2}\.\s*\d{4}|\bč\.\s?p\.|\bčp\.|\b[A-ZÁ-Ž]\w*(?:ská|cká|ova|ní|ého) \d{1,3}(?:/\d+)?[a-z]?\b(?![.\d])|\bul\.|"
+                        r"\+\d{3}\s?\d{3}\s?\d{3}\s?\d{3}|\b[2-79]\d{2} \d{3} \d{3}\b|[\w.+-]+@[\w-]+\.\w+|\btel\.")
+    for k, p in P.items():
+        yv, note = (p.get("y") or "").strip(), p.get("note") or ""
+        rok = re.search(r"\d{4}", yv)
+        if not ("žijící" in note.lower() or yv.startswith("*") and rok and int(rok.group()) > hranice):
+            continue
+        m = osobni.search(" ".join(p.get("f", [])) + " | " + note)
+        if m:
+            warn.append(f"ŽIJÍCÍ osoba {k} ({p.get('n')}): „{m.group(0)}“ – u žijících jen jméno a rok narození "
+                        f"(bez data, adresy, telefonu, e-mailu; reference/soukromi.md)")
+        elif len(re.sub(r"Žijící – údaje jen základní\.?", "", note).strip()) > 80:
+            warn.append(f"ŽIJÍCÍ osoba {k} ({p.get('n')}): dlouhá poznámka – u žijících jen jméno a rok narození "
+                        f"(reference/soukromi.md)")
 
     if not os.path.exists(os.path.join(DATA, "pribeh.md")) and LINES:
         hlavni = min(LINES)
