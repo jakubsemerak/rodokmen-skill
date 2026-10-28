@@ -232,7 +232,7 @@ a `zdroje/` (výřezy pro web / plné rozlišení), `dokumenty/` (originály od 
 | `policie_prihlasky.py` | pražské policejní přihlášky 1850–1914 |
 | `soal_zoomify.py` | snímek SOA Litoměřice nebo ZA Opava (knihu najdi v prohlížeči) |
 | `matricula_dl.sh`, `matricula_batch.sh` | snímky z Matriculy (Rakousko, Bavorsko, Polsko…) |
-| `anno.py`, `anno_snap.py`, `kramerius.py` | noviny: ANNO (rakouské, `--ztraty` = seznamy ztrát 1914–1919), Kramerius (české) |
+| `anno.py`, `anno_snap.py`, `kramerius.py` | noviny: ANNO (rakouské, `--ztraty` = seznamy ztrát 1914–1919), Kramerius (české; `kramerius.py text <PID>` = celý OCR text stránky) |
 | `mapa_knihy.py` | mapa knihy po vsích a montáž sloupce jmen (`matriky.md`) |
 | `cache.py` | sdílená mezipaměť snímků; uložení snímku z prohlížeče |
 | `ged_import.py`, `ftb_export.py` | rodinný strom (GEDCOM, záloha MyHeritage) – `data.md` |
