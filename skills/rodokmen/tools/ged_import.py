@@ -6,7 +6,8 @@ Použití (z kořene projektu):
   python3 -I tools/ged_import.py dokumenty/strom.ged "Jméno Příjmení" -> předci této osoby s Kekulého čísly
                                                                         (1 = ona, 2 = otec, 3 = matka…), všechny
                                                                         události, poznámky a FRONTA ZÁPISŮ k vyhledání
-  … "Jméno Příjmení" --osoby   -> totéž jako kostra pro data/osoby.py (stav "fam", ke kontrole a doplnění)
+  … "Jméno Příjmení" --osoby   -> totéž jako kostra pro data/osoby.py (stav "fam", ke kontrole a doplnění;
+                                 žijící jen jméno a rok narození)
 
 Fronta zápisů: u každého předka nejmladší známá událost s místem (úmrtí, pak sňatek, pak narození) –
 úmrtní a oddací zápisy uvádějí datum a místo narození i rodiče, proto se hledá od nejmladšího zápisu.
@@ -103,6 +104,16 @@ def year(d):
     return int(m.group()) if m else None
 
 
+def year_q(d):
+    """'asi 1955', 'před 1990', '1955' – rok i s upřesněním pro pole y."""
+    y = year(d)
+    if not y:
+        return ""
+    q = re.match(r"(asi|před|po|mezi)\b", d.strip())
+    q = "asi" if q and q.group(1) == "mezi" or " nebo " in d else q.group(1) if q else ""
+    return f"{q} {y}".strip()
+
+
 def name(ind):
     n = first(ind, "NAME").replace("/", "").strip()
     return re.sub(r"\s+", " ", n) or "(beze jména)"
@@ -184,10 +195,13 @@ def main():
         facts += [first(n, "OCCU") or n.get("val", "") for n in sub(ind, "OCCU")]
         notes = [re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", n.get("val", ""))).strip() for n in sub(ind, "NOTE")]
         notes = [n for n in notes if n]
-        b = next((year(d) for t, d, p, x in ev if t == "BIRT"), None)
-        dd = next((year(d) for t, d, p, x in ev if t == "DEAT"), None)
-        y = f"{b}–{dd}" if b and dd else (f"* {b}" if b else (f"† {dd}" if dd else ""))
-        if as_py:
+        b = next((year_q(d) for t, d, p, x in ev if t == "BIRT" and year(d)), "")
+        dd = next((year_q(d) for t, d, p, x in ev if t == "DEAT" and year(d)), "")
+        y = f"{b}{' – ' if ' ' in dd else '–'}{dd}" if b and dd else (f"* {b}" if b else (f"† {dd}" if dd else ""))
+        living = b and not any(t in ("DEAT", "BURI") for t, d, p, x in ev) and year(b) > datetime.date.today().year - 100
+        if as_py and living:   # žijící: na web jen jméno a rok narození (reference/soukromi.md)
+            print(f' {k}: dict(n={name(ind)!r}, y={y!r}, st="fam", f={[y]!r}, r=[], note="Žijící – údaje jen základní."),')
+        elif as_py:
             note = " ".join(notes)   # !r = platný Python i pro uvozovky a „\“ ve jménech a poznámkách (osoby.py se spouští přes exec)
             print(f' {k}: dict(n={name(ind)!r}, y={y!r}, st="fam", f={facts!r}, r=[]' + (f', note={note[:300]!r}' if note else "") + "),")
         else:
