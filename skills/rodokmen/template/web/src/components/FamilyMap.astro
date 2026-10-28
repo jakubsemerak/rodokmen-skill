@@ -107,8 +107,11 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
     const person = (s: string) =>
       `${names[s][3] ? `<img class="fmap-photo" src="/img/${esc(names[s][3])}.jpg" alt="">` : ''}` +
       `<a href="${esc(names[s][2])}">${esc(names[s][0])}</a>${names[s][1] ? ` <span class="y">${esc(names[s][1])}</span>` : ''}`;
-    const placePhoto = (pl: { photo?: string; photoCaption?: string }) =>
-      pl.photo ? `<img class="fmap-place-photo" src="/img/${esc(pl.photo)}.jpg" alt=""><span class="cap">${esc(pl.photoCaption)}</span>` : '';
+    const placePhoto = (pl: { photo?: string; photoCaption?: string; photoSource?: string }) =>
+      pl.photo
+        ? `<img class="fmap-place-photo" src="/img/${esc(pl.photo)}.jpg" alt=""><span class="cap">${esc(pl.photoCaption)}` +
+          `${pl.photoSource ? ` <a href="${esc(pl.photoSource)}" target="_blank" rel="noopener">zdroj a licence</a>` : ''}</span>`
+        : '';
     const placeByName = Object.fromEntries(places.map((pl: { name: string }) => [pl.name, pl]));
 
     const dotGroups: Record<string, L.LayerGroup> = {};

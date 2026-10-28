@@ -363,7 +363,8 @@ def main():
         foto = e.get("foto") if e.get("foto") and os.path.exists(os.path.join(VYREZY, e["foto"] + ".jpg")) else None
         places.append(dict(name=name, lat=e["lat"], lon=e["lon"], lines=[dict(k=k, people=v) for k, v in sorted(byline.items())],
                            years=[min(yrs), max(yrs)] if yrs else None, hypothesis=bool(e.get("hypoteza")),
-                           photo=foto, photoCaption=e.get("foto_popis", "") if foto else ""))
+                           photo=foto, photoCaption=e.get("foto_popis", "") if foto else "",
+                           photoSource=e.get("foto_zdroj", "") if foto and str(e.get("foto_zdroj", "")).startswith("https://") else ""))
 
     known = [p for p in people.values() if p["k"] > 1]
     stats = dict(ancestors=len(known), documented=sum(p["st"] == "doc" for p in known), records=len(records),

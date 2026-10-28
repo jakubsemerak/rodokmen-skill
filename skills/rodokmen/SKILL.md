@@ -190,7 +190,7 @@ Podrobně `reference/web.md`. Ve zkratce:
    oprav hned (adresa osoby se mění, když se jí doplní rok narození).
    Po každém větším kole hledání zkontroluj i texty úvodu ve `web.json` (`uvod`, `zajimavosti_na_uvodu`) –
    zastarávají („nejstarší předek je…“, počty generací).
-4. Mapa: každou obec z faktů přidej do `mista.json` (`kontrola.py` hlásí chybějící) – z nich se počítá stěhování a cesta
+4. Mapa: každou obec z faktů přidej do `mista.json` (`kontrola.py` hlásí chybějící obce narození) – z nich se počítá stěhování a cesta
    předka. K hlavním obcím nabídni fotky obce a kostela (`foto_mista.py`), fotku si před uložením prohlédni.
 5. Před zveřejněním si vezmi `reference/soukromi.md` a projdi s uživatelem, co na webu bude (žijící lidé!).
    Na web jde i „Co hledáme“ (`ISSUES`), poznámky osob a deník. Hlášky `CITLIVÉ` z `kontrola.py` vyřeš s uživatelem;

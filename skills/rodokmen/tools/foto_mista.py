@@ -51,21 +51,23 @@ def commons_info(files):
     out = {}
     for i in range(0, len(files), 20):
         par = {"action": "query", "format": "json", "prop": "imageinfo", "iiprop": "url|extmetadata", "iiurlwidth": 1600,
-               "iiextmetadatafilter": "LicenseShortName|Artist|ObjectName", "titles": "|".join("File:" + f for f in files[i:i + 20])}
+               "iiextmetadatafilter": "LicenseShortName|Artist|Attribution", "titles": "|".join("File:" + f for f in files[i:i + 20])}
         d = json.loads(get("https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode(par)))
         for p in d.get("query", {}).get("pages", {}).values():
             ii = (p.get("imageinfo") or [{}])[0]
             meta = ii.get("extmetadata", {})
-            artist = re.sub(r"<[^>]+>", "", html.unescape(meta.get("Artist", {}).get("value", ""))).strip() or "neznámý autor"
+            credit = meta.get("Attribution", {}).get("value") or meta.get("Artist", {}).get("value", "")   # Attribution = text, který autor žádá
+            artist = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", html.unescape(credit))).strip() or "neznámý autor"
             out[p["title"][5:]] = dict(url=ii.get("thumburl") or ii.get("url"), page=ii.get("descriptionurl", ""),
-                                       license=meta.get("LicenseShortName", {}).get("value", "?"), artist=artist[:80])
+                                       license=meta.get("LicenseShortName", {}).get("value", "?"), artist=artist[:200])
     return out
 
 
 def candidates(name, pos):
-    found = sparql(f'''SELECT ?o ?c ?img WHERE {{ ?o rdfs:label "{name}"@cs; wdt:P17 wd:Q213; wdt:P625 ?c.
-                       OPTIONAL {{ ?o wdt:P18 ?img }} }}''')
-    found = sorted(found, key=lambda b: dist(pos, point(b["c"]["value"])))
+    found = sparql(f'''SELECT ?o ?c ?img ?lau WHERE {{ ?o rdfs:label {json.dumps(name, ensure_ascii=False)}@cs; wdt:P17 wd:Q213;
+                       wdt:P625 ?c. OPTIONAL {{ ?o wdt:P18 ?img }} OPTIONAL {{ ?o wdt:P782 ?lau }} }}''')
+    # stejnojmenné položky (nádraží, část obce) mívají stejné souřadnice – přednost má obec s kódem LAU
+    found = sorted(found, key=lambda b: ("lau" not in b, round(dist(pos, point(b["c"]["value"])), 1)))
     cands = []
     if found and dist(pos, point(found[0]["c"]["value"])) < 5:
         obec = found[0]["o"]["value"].rsplit("/", 1)[-1]
@@ -74,6 +76,7 @@ def candidates(name, pos):
         for b in sparql(f'''SELECT ?k ?kLabel ?img WHERE {{ ?k wdt:P131 wd:{obec}; wdt:P31/wdt:P279* wd:Q16970; wdt:P18 ?img.
                             SERVICE wikibase:label {{ bd:serviceParam wikibase:language "cs,en". }} }}'''):
             cands.append((f"{name}, {b['kLabel']['value']}", b["img"]["value"]))
+    cands = list({u: (p, u) for p, u in reversed(cands)}.values())[::-1]   # stejná fotka u obce i kostela jen jednou
     files = [urllib.parse.unquote(u.rsplit("/", 1)[-1]).replace("_", " ") for _, u in cands]
     if not files:   # obec bez fotky na Wikidatech: fotky z Commons do 1 km od středu obce
         par = {"action": "query", "format": "json", "list": "geosearch", "gscoord": f"{pos[0]}|{pos[1]}", "gsradius": 1000,

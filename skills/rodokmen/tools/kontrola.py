@@ -104,9 +104,11 @@ def main():
             err.append(f"místo {name}: špatný výraz '{e.get('re')}': {ex}")
 
     mista_rx = []
-    for e in jload("mista.json", {}).values():
+    for n, e in jload("mista.json", {}).items():
+        if "lat" not in e or e.get("hypoteza"):   # export je pro domov a stěhování nepoužije
+            continue
         try:
-            mista_rx.append(re.compile(e.get("re") or "^$"))
+            mista_rx.append(re.compile(e.get("re") or re.escape(n)))
         except re.error:
             pass
     for k, p in P.items():
@@ -162,6 +164,7 @@ def main():
         texty.append((f"osoba {k}", text + (f" {hranice}" if roky and min(roky) >= 1870 or k < 8 else "")))
     texty += [(f"boční příbuzný {s.get('n')}", s.get("n", "") + " " + s.get("t", "")) for s in SIDE]
     texty += [("HYPOTEZY", " ".join(strings(h))) for h in ns.get("HYPOTEZY", [])]
+    texty += [(f"LINES {k}", " ".join(strings(v))) for k, v in LINES.items()]
     texty += [("web.json", t) for kk, v in cfg.items() if kk not in ("prihlaseni", "citlive_schvaleno") for t in strings(v)]
     texty += [(f"zápis {z.get('klic')}", " ".join(strings([z.get("nazev"), z.get("shrnuti"), z.get("datum")]))) for z in zaz]
     texty += [(f"přepis {kk}", " ".join(strings(v.get("cs", "")))) for kk, v in prep.items() if isinstance(v, dict)]

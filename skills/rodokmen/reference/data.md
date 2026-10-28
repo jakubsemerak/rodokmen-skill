@@ -68,7 +68,8 @@ Zapisuje `ramecek.py`. Rámeček má obepnout celý čtený zápis (ne jen jmén
 ve faktech osob (kmen slova, aby sedělo skloňování: „Holic“ najde Holice i v Holicích). Spravuje `mista.py`.
 Pozor na kolize (Hradec Králové × Nový Hradec Králové – použij `(?<!Nový )Hradec`; krátká jména jako `\bBuku?\b`).
 Hypotéza: `"hypoteza": true, "rod": 8`. Fotka obce nebo kostela pro okénko mapy: `"foto": "misto_holice"` (klíč obrázku
-ve `vyrezy/`) a `"foto_popis"` s autorem a licencí – zapisuje `foto_mista.py`. Když OpenStreetMap obec nenajde („Žár“, malé osady), zkus třetí parametr – dotaz: `mista.py pridej "Žár" "Žár" "Žár, Zdíkov, okres Prachatice"`
+ve `vyrezy/`), `"foto_popis"` s autorem a licencí a `"foto_zdroj"` (stránka fotky, na webu odkaz „zdroj a licence“) –
+zapisuje `foto_mista.py`. Když OpenStreetMap obec nenajde („Žár“, malé osady), zkus třetí parametr – dotaz: `mista.py pridej "Žár" "Žár" "Žár, Zdíkov, okres Prachatice"`
 nebo dotaz s větší obcí či okresem. U **víceznačných názvů** (Podolí, Dub, Lhota) vezme OpenStreetMap kteroukoli ves
 („Podolí, Česko“ = Podolí u Brna) – v posledním sloupci výpisu zkontroluj okres a dej dotaz se sousední obcí
 (`mista.py pridej "Podolí" "Podol" "Podolí, Odlochovice"`). Místopis nejlíp zná rodina – když si nejsi jistý, zeptej se.
@@ -77,7 +78,7 @@ nebo dotaz s větší obcí či okresem. U **víceznačných názvů** (Podolí,
 Export určí každé osobě **domov**: první obec z `mista.json` ve faktu o narození (`*`), není-li tam, tak ve volném textu
 (bydliště, řemeslo), pak ve sňatku (`×`) a úmrtí (`†`). Šipka stěhování vede z domova rodiče do domova dítěte v linii.
 Proto piš obec do faktu o narození vždy, když ji znáš (`"* 1862 Ostřetín čp. 23"`), a každou obec z faktů přidej
-do `mista.json` – `kontrola.py` hlásí obce, které tam chybí. Osoba bez známé obce na mapě nebude a cesta ji přeskočí.
+do `mista.json` – `kontrola.py` hlásí obce narození (`* rok Obec`), které tam chybí; ostatní obce hlídej sám. Osoba bez známé obce na mapě nebude a cesta ji přeskočí.
 
 ## `dokumenty.json` – rodinné fotky a dokumenty na webu
 `[{"img": "foto_svatba_1919", "popis": "Svatba Jana a Josefy, Holice 1919.", "osoby": [8, 9]}]`
