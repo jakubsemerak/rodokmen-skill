@@ -10,3 +10,4 @@ public/zdroje/
 public/prihlaseni.html
 nginx.conf
 netlify/edge-functions/
+public/data/

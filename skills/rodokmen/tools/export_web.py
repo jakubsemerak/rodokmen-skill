@@ -4,11 +4,12 @@
 Čte data/osoby.py, data/zaznamy.json, data/svazky.json, data/prepisy.json, data/zvyrazneni.json,
 data/mista.json, data/web.json, data/dokumenty.json a markdownové poznámky. Zapisuje
 web/src/data/site.json, web/src/generated/*, web/public/{img,zdroje}, web/public/prihlaseni.html,
-web/nginx.conf a web/netlify/edge-functions/brana.js.
+web/public/data/rodokmen.json, web/nginx.conf, web/netlify/edge-functions/brana.js
+a vystupy/rodokmen.sqlite (i se soukromými údaji – jen pro dotazy, nenasazuje se).
 
 Spouští se z web/ příkazem `npm run data` (nebo přímo `python3 -I tools/export_web.py`, na Windows `python -I -X utf8 …`).
 """
-import hashlib, html, json, os, re, shutil, subprocess, sys, unicodedata
+import hashlib, html, json, os, re, shutil, sqlite3, subprocess, sys, unicodedata
 for _s in (sys.stdout, sys.stderr):   # UTF-8 výstup i na Windows bez -X utf8 (cp1250 neumí třeba „→“)
     if hasattr(_s, "reconfigure"):
         _s.reconfigure(encoding="utf-8", errors="replace")
@@ -181,6 +182,62 @@ def login_files(cfg):
     nginx = open(os.path.join(WEB, "nginx.sablona.conf"), encoding="utf-8").read().replace("{{ODPOVED}}", nginx_map)
     write(os.path.join(WEB, "nginx.conf"), nginx)
     return bool(answer)
+
+
+def write_db(P, slugs, people, families, events, moves):
+    """Celá data i se soukromými poznámkami pro dotazy (agent, rodina) – vystupy/ se nikam nenasazuje."""
+    path = os.path.join(ROOT, "vystupy", "rodokmen.sqlite")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if os.path.exists(path):
+        os.remove(path)
+    db = sqlite3.connect(path)
+    db.executescript("""
+CREATE TABLE osoby (k INTEGER PRIMARY KEY, slug TEXT, jmeno TEXT, roky TEXT, stav TEXT, generace INTEGER, pohlavi TEXT,
+  rod INTEGER, domov TEXT, otec INTEGER, matka INTEGER, zapisy TEXT, poznamka TEXT, soukrome TEXT);
+CREATE TABLE fakta (osoba INTEGER, poradi INTEGER, druh TEXT, rok INTEGER, text TEXT);
+CREATE TABLE udalosti (rok INTEGER, datum TEXT, druh TEXT, misto TEXT, odkud TEXT, popis TEXT, osoby TEXT);
+CREATE TABLE rodiny (id TEXT PRIMARY KEY, otec TEXT, matka TEXT, deti TEXT, snatek TEXT, rod INTEGER, generace INTEGER);
+CREATE TABLE zaznamy (klic TEXT PRIMARY KEY, druh TEXT, datum TEXT, nazev TEXT, shrnuti TEXT, svazek TEXT, snimek TEXT, odkaz TEXT, osoby TEXT);
+CREATE TABLE svazky (id TEXT PRIMARY KEY, archiv TEXT, svazek TEXT, popis TEXT, portal TEXT, url TEXT);
+CREATE TABLE prepisy (klic TEXT PRIMARY KEY, orig TEXT, cs TEXT);
+CREATE TABLE mista (nazev TEXT PRIMARY KEY, lat REAL, lon REAL, re TEXT, hypoteza INTEGER, rod INTEGER);
+CREATE TABLE stehovani (odkud TEXT, kam TEXT, rod INTEGER, rok INTEGER, osoby TEXT);
+""")
+    js = lambda v: json.dumps(v, ensure_ascii=False)
+    by_k = {p["k"]: p for p in people.values()}
+    for k, p in sorted(P.items()):
+        if not isinstance(k, int):
+            continue
+        w = by_k.get(k, {})
+        soukr = p.get("soukrome") or []
+        db.execute("INSERT INTO osoby VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+            k, slugs.get(k), p.get("n", ""), p.get("y", ""), p.get("st", "unk"), gen(k), w.get("sex"), w.get("line"), w.get("home"),
+            2 * k if 2 * k in P else None, 2 * k + 1 if 2 * k + 1 in P else None, js(p.get("r", [])), p.get("note", ""),
+            js(soukr if isinstance(soukr, list) else [soukr])))
+        for i, f in enumerate(p.get("f", [])):
+            y = re.search(r"\b(1[4-9]\d\d|20\d\d)\b", f)
+            db.execute("INSERT INTO fakta VALUES (?,?,?,?,?)", (k, i, f[:1] if f[:1] in "*×†" else "", int(y.group()) if y else None, f))
+    db.executemany("INSERT INTO udalosti VALUES (?,?,?,?,?,?,?)",
+                   [(e["year"], e["date"], e["kind"], e["place"], e.get("src"), e["label"], js(e["people"])) for e in events])
+    db.executemany("INSERT INTO rodiny VALUES (?,?,?,?,?,?,?)",
+                   [(f["id"], f["father"], f["mother"], js(f["children"]), js(f["marriage"]), f["line"], f["gen"]) for f in families.values()])
+    refs = {}
+    for p in people.values():
+        for r in p["records"]:
+            refs.setdefault(r, []).append(p["slug"])
+    db.executemany("INSERT OR REPLACE INTO zaznamy VALUES (?,?,?,?,?,?,?,?,?)",
+                   [(z.get("klic"), z.get("druh"), z.get("datum"), z.get("nazev"), z.get("shrnuti"), z.get("svazek"), z.get("snimek"),
+                     z.get("odkaz"), js(refs.get(z.get("klic"), []))) for z in jload("zaznamy.json", [])])
+    db.executemany("INSERT INTO svazky VALUES (?,?,?,?,?,?)", [(k, v.get("archiv"), v.get("svazek"), v.get("popis"), v.get("portal"), v.get("url"))
+                                                           for k, v in jload("svazky.json", {}).items()])
+    db.executemany("INSERT INTO prepisy VALUES (?,?,?)", [(k, js(v.get("orig", "")) if not isinstance(v.get("orig", ""), str) else v.get("orig", ""),
+                                                           v.get("cs", "") if isinstance(v.get("cs", ""), str) else js(v.get("cs")))
+                                                          for k, v in jload("prepisy.json", {}).items() if isinstance(v, dict)])
+    db.executemany("INSERT INTO mista VALUES (?,?,?,?,?,?)", [(n, e.get("lat"), e.get("lon"), e.get("re"), int(bool(e.get("hypoteza"))), e.get("rod"))
+                                                          for n, e in jload("mista.json", {}).items()])
+    db.executemany("INSERT INTO stehovani VALUES (?,?,?,?,?)", [(m["src"], m["dst"], m["line"], m.get("year"), js(m["people"])) for m in moves])
+    db.commit()
+    db.close()
 
 
 def main():
@@ -414,6 +471,9 @@ def main():
                       for d in docs_cfg if os.path.exists(os.path.join(VYREZY, d["img"] + ".jpg"))])
 
     write(os.path.join(WEB, "src", "data", "site.json"), json.dumps(site, ensure_ascii=False, indent=1))
+    write(os.path.join(WEB, "public", "data", "rodokmen.json"), json.dumps(
+        {k: site[k] for k in ("people", "families", "events", "records", "places", "moves", "lines", "root")}, ensure_ascii=False))
+    write_db(P, slugs, people, families, events, moves)
     gen_dir = os.path.join(WEB, "src", "generated")
     for src, dst in (("archivni_dotazy.md", "dotazy.md"), ("research_log.md", "denik.md"), ("zajimavosti.md", "zajimavosti.md")):
         path = os.path.join(DATA, src)

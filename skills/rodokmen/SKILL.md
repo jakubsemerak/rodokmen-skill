@@ -266,5 +266,5 @@ Nedělej to pořád. Postup:
 | `foto_mista.py "Obec"` / `foto_mista.py "Obec" <n>` | fotka obce nebo kostela z Wikimedia Commons (s autorem a licencí) do okénka mapy |
 | `zapis.py <soubor> <klíč> <vstup.json> [--sloucit]` | přidá / změní položku v `zaznamy`, `svazky`, `prepisy`… beze změny formátu |
 | `kontrola.py` | kontrola dat; hlásí i citlivé údaje na webu a kdy psát příběh |
-| `export_web.py` | data → web (volá ho `npm run data`) |
+| `export_web.py` | data → web (volá ho `npm run data`); zapíše i `vystupy/rodokmen.sqlite` – na otázky nad daty („kdo se narodil v Holicích“, „kolik sňatků před 1800“) se dotazuj `sqlite3`/Pythonem tam (schéma v `reference/data.md`) |
 | `fan_chart.py vystupy/` | vějíř předků jako plakát k tisku |

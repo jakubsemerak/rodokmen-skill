@@ -104,6 +104,31 @@ Viz `web.md`.
 - Poznámky pro Clauda v markdownu piš jako `<!-- … -->` – na web nejdou.
 - `archivni_dotazy.md`, `udaje_od_rodiny.md` – volný text.
 
+## Databáze pro dotazy (`vystupy/rodokmen.sqlite`, `web/public/data/rodokmen.json`)
+Každý export (`npm run data`) je vyrobí znovu – ručně je neupravuj, zdrojem jsou soubory v `data/`.
+- `web/public/data/rodokmen.json` – veřejná data webu (`people`, `families`, `events`, `records`, `places`, `moves`,
+  `lines`, `root`) pro skripty v prohlížeči a agenty; soukromí stejné jako web (za přihlášením).
+- `vystupy/rodokmen.sqlite` – **jen v projektu, nenasazuje se a je v `.gitignore`**: všechny osoby z `osoby.py`
+  včetně soukromých údajů (`soukrome`). Seznamy jsou JSON text (dotaz přes `json_each`).
+
+| tabulka | sloupce |
+|---|---|
+| `osoby` | `k` (Kekulé), `slug`, `jmeno`, `roky`, `stav`, `generace`, `pohlavi`, `rod`, `domov`, `otec`, `matka` (čísla), `zapisy`, `poznamka`, `soukrome` |
+| `fakta` | `osoba`, `poradi`, `druh` (`*`/`×`/`†`/prázdné), `rok`, `text` |
+| `udalosti` | `rok`, `datum`, `druh` (`narozeni`/`snatek`/`umrti`/`stehovani`), `misto`, `odkud`, `popis`, `osoby` (slugy) |
+| `rodiny` | `id`, `otec`, `matka`, `deti`, `snatek`, `rod`, `generace` |
+| `zaznamy` | `klic`, `druh`, `datum`, `nazev`, `shrnuti`, `svazek`, `snimek`, `odkaz`, `osoby` |
+| `svazky`, `prepisy`, `mista`, `stehovani` | jako stejnojmenné soubory v `data/` (`stehovani`: `odkud`, `kam`, `rod`, `rok`, `osoby`) |
+
+```sql
+-- kdo se narodil v Holicích, podle roku
+SELECT rok, popis FROM udalosti WHERE druh = 'narozeni' AND misto = 'Holice' ORDER BY rok;
+-- všechny události jedné osoby
+SELECT u.rok, u.popis, u.misto FROM udalosti u, json_each(u.osoby) j WHERE j.value = 'barbora-mala-1862';
+-- předci bez zápisu, od nejbližších generací
+SELECT k, jmeno, roky FROM osoby WHERE zapisy = '[]' AND stav <> 'unk' ORDER BY generace, k;
+```
+
 ## Odkazy na osoby (slug)
 Slug = jméno bez diakritiky + rok, např. `jan-novak-1890`; při kolizi přidá číslo osoby. Přesné slugy po `npm run data`
 v `web/src/data/site.json` (`people`). Při přejmenování osoby se slug změní – oprav odkazy v textech.

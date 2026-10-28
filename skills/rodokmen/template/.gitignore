@@ -15,5 +15,7 @@ web/src/generated/
 web/public/img/
 web/public/zdroje/
 web/public/prihlaseni.html
+web/public/data/
 web/nginx.conf
 web/netlify/edge-functions/
+vystupy/rodokmen.sqlite
