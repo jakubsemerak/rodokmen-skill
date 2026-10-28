@@ -88,3 +88,5 @@ Znovu spusť `python3 -I SKILL_DIR/tools/novy_projekt.py <složka projektu>`. Da
 a soubory ve `web/`, které se liší od nové šablony, taky – staré verze uloží do `pracovni/zaloha_web_<datum>/` a vypíše jejich seznam.
 Upravoval-li jsi s uživatelem vzhled (styly, stránky), převezmi úpravy ze zálohy (porovnej soubory) a ověř web. Pak ve `web/`
 `npm install` a `npm run data`. Starou šablonu přihlášení `export_web.py` odmítne s výzvou k aktualizaci.
+Projekt z verze do 0.5.0 s matrikami z ARON: spusť i `python3 -I tools/aron_img.py opravit-odkazy` (odkazy na snímky
+vedly na první snímek svazku).
