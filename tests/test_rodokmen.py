@@ -218,6 +218,23 @@ class Ukazka(unittest.TestCase):
         self.export()
         self.assertFalse(mw.exists())
 
+    @unittest.skipUnless(shutil.which("node"), "chybí node")
+    def test_brana_cloudflare_v_node(self):
+        import hashlib
+        self.export()
+        mw = pathlib.Path(self.p, "web", "functions", "_middleware.js")
+        h = hashlib.sha256("rodokmen:kovar".encode()).hexdigest()
+        js = """
+const { onRequest } = await import(process.argv[1]);
+const ctx = (path, cookie) => ({ request: new Request('https://x.test' + path, { headers: cookie ? { cookie } : {} }),
+  next: async () => new Response('ok', { status: 200 }), env: { ASSETS: { fetch: async () => new Response('login') } } });
+const r = await Promise.all([onRequest(ctx('/', '')), onRequest(ctx('/', 'rodokmen=' + process.argv[2])),
+  onRequest(ctx('/', 'rodokmen=' + '0'.repeat(64))), onRequest(ctx('/prihlaseni', ''))]);
+console.log(r.map((x) => x.status).join(','));
+"""
+        r = subprocess.run(["node", "--input-type=module", "-e", js, mw.as_uri(), h], capture_output=True, text=True, timeout=30)
+        self.assertEqual(r.stdout.strip(), "401,200,401,200", r.stderr)
+
     def test_aktualizace_doplni_gitignore(self):
         gi = pathlib.Path(self.p, ".gitignore")
         gi.write_text("pracovni/\nmoje/\n", encoding="utf-8")

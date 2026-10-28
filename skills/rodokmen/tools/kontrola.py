@@ -336,7 +336,7 @@ def main():
             texty += [(f, odst) for odst in re.split(r"\n\s*\n|\n(?=#)|\n(?=\|)", md)]   # odstavce, oddíly „## …“, řádky tabulek
     soukrome = {}
     for k, p in [*P.items(), *((f"RODINA {oid}", o) for oid, o in R.items())]:
-        s = p.get("soukrome") or [] if isinstance(p, dict) else []
+        s = (p.get("soukrome") or []) if isinstance(p, dict) else []
         for t in [s] if isinstance(s, str) else s:
             if isinstance(t, str) and len(t.strip()) >= 4:
                 soukrome[t.strip()] = k

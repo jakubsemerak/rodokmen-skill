@@ -118,7 +118,7 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact, mov
       const Logo = L.Control.extend({
         onAdd() {
           const a = L.DomUtil.create('a', 'fmap-logo');
-          a.href = 'http://mapy.com/';
+          a.href = 'https://mapy.com/';
           a.target = '_blank';
           a.rel = 'noopener';
           a.innerHTML = '<img src="https://api.mapy.com/img/api/logo.svg" alt="Mapy.com" width="100">';
