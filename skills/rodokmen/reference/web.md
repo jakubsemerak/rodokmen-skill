@@ -45,9 +45,11 @@ Náhled spouštěj na pozadí a uživateli pošli odkaz. Vzhled si ověř sám (
   Bez vyplněného `uvod` ukáže úvodní stránka aspoň název a `lead` příběhu. Viz `pribehy.md`.
 - Šablona `web.json` je prázdná – název nastav hned, jak znáš příjmení výchozí osoby (`kontrola.py` hlásí zbytky ukázky).
 - `mapa.podklad`: `osm` (výchozí, OpenStreetMap bez klíče), `mapy.cz` (základní mapa Mapy.com) nebo `mapy.cz-outdoor`
-  (turistická). Pro Mapy.com založ uživatel účet na developer.mapy.com a API klíč dá do `mapa.klic`. **Klíč je na webu
-  veřejný** (prohlížeč ho posílá s každou dlaždicí) – v účtu Mapy.com ho ať omezí na doménu webu (a `localhost` pro
-  náhled). Bez klíče web použije OpenStreetMap a `kontrola.py` upozorní. Klíč nikdy nepiš do kódu webu, jen do `web.json`.
+  (turistická). Pro Mapy.com založ uživatel účet na developer.mapy.com; API klíč zapiš do `data/tajne.json`
+  jako `{"mapy_klic": "…"}` (je v `.gitignore`, **nikdy ho necommituj**), případně do proměnné prostředí `MAPY_API_KEY`
+  (má přednost). Starší `mapa.klic` ve `web.json` ještě funguje, ale `web.json` je v gitu – `kontrola.py` upozorní, ať ho
+  přesuneš. **Klíč je na webu veřejný** (prohlížeč ho posílá s každou dlaždicí) – v účtu Mapy.com ho ať omezí na doménu
+  webu (a `localhost` pro náhled). Bez klíče web použije OpenStreetMap a `kontrola.py` upozorní. Klíč nikdy nepiš do kódu webu.
 - `citlive_schvaleno`: seznam úryvků textu, které uživatel na webu schválil (např. `["oběsil se ve stodole"]`) –
   `kontrola.py` je pak nehlásí jako `CITLIVÉ`. Úryvek musí obsahovat hlášené slovo; když se text změní, hlásí se znovu.
 

@@ -1,5 +1,7 @@
 # pracovní soubory a stažené stránky (nejdou na web ani do historie)
 pracovni/
+# API klíče (Mapy.com) – nikdy do gitu
+data/tajne.json
 __pycache__/
 .DS_Store
 Thumbs.db

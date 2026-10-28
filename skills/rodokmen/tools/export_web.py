@@ -510,6 +510,9 @@ def main():
     has_story = os.path.exists(os.path.join(DATA, "pribeh.md"))
     public_cfg = {k: v for k, v in cfg.items() if k != "prihlaseni"}
     public_cfg["maPribeh"] = has_story
+    klic = os.environ.get("MAPY_API_KEY") or jload("tajne.json", {}).get("mapy_klic")
+    if klic:
+        public_cfg["mapa"] = {**(cfg.get("mapa") or {}), "klic": klic}
     site = dict(config=public_cfg, places=places, moves=moves, events=events, coords=coords, root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
                 families=families, others=others, records=records, lines=lines,
                 issues=[dict(title=i, text="") if isinstance(i, str) else dict(title=i[0], text=i[1]) for i in ISSUES], stats=stats, hypotheses=hypotheses,

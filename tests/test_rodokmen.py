@@ -4,9 +4,10 @@ import json, os, pathlib, shutil, sqlite3, subprocess, sys, tempfile, unittest
 SKILL = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "skills", "rodokmen")
 
 
-def run(proj, tool, *args):
+def run(proj, tool, *args, env=None):
+    e = {k: v for k, v in os.environ.items() if k != "MAPY_API_KEY"} | (env or {})
     r = subprocess.run([sys.executable, "-I", "-X", "utf8", os.path.join(proj, "tools", tool), *args],
-                       cwd=proj, capture_output=True, text=True, encoding="utf-8", timeout=60)
+                       cwd=proj, env=e, capture_output=True, text=True, encoding="utf-8", timeout=60)
     return r.stdout + r.stderr
 
 
@@ -197,12 +198,34 @@ class Ukazka(unittest.TestCase):
         cfg = json.loads(path.read_text(encoding="utf-8"))
         cfg["mapa"] = {"podklad": "mapy.cz"}
         path.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
-        self.assertIn("chybí mapa.klic", run(self.p, "kontrola.py"))
-        cfg["mapa"]["klic"] = "TESTKEY"
+        self.assertIn("chybí API klíč", run(self.p, "kontrola.py"))
+        cfg["mapa"]["klic"] = "TESTKLIC"
         path.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
-        self.assertNotIn("mapa.klic", run(self.p, "kontrola.py"))
+        k = run(self.p, "kontrola.py")
+        self.assertNotIn("chybí API klíč", k)
+        self.assertIn("mapa.klic je v gitu", k)
         _, s = self.export()
-        self.assertEqual(s["config"]["mapa"]["klic"], "TESTKEY")
+        self.assertEqual(s["config"]["mapa"]["klic"], "TESTKLIC")
+
+    def test_mapy_klic_z_tajne_a_promenne(self):
+        path = pathlib.Path(self.p, "data", "web.json")
+        cfg = json.loads(path.read_text(encoding="utf-8"))
+        cfg["mapa"] = {"podklad": "mapy.cz"}
+        path.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+        pathlib.Path(self.p, "data", "tajne.json").write_text('{"mapy_klic": "TESTKLIC"}', encoding="utf-8")
+        k = run(self.p, "kontrola.py")
+        self.assertNotIn("chybí API klíč", k)
+        self.assertNotIn("mapa.klic", k)
+        _, s = self.export()
+        self.assertEqual(s["config"]["mapa"], {"podklad": "mapy.cz", "klic": "TESTKLIC"})
+        run(self.p, "export_web.py", env={"MAPY_API_KEY": "ENVKLIC"})
+        s = json.loads(pathlib.Path(self.p, "web", "src", "data", "site.json").read_text(encoding="utf-8"))
+        self.assertEqual(s["config"]["mapa"]["klic"], "ENVKLIC")
+        self.assertNotIn("klic", json.loads(path.read_text(encoding="utf-8"))["mapa"])
+
+    def test_tajne_v_gitignore(self):
+        lines = pathlib.Path(SKILL, "template", ".gitignore").read_text(encoding="utf-8").splitlines()
+        self.assertIn("data/tajne.json", lines)
 
     def test_brana_cloudflare(self):
         import hashlib
@@ -241,6 +264,7 @@ console.log(r.map((x) => x.status).join(','));
         subprocess.run([sys.executable, "-I", os.path.join(SKILL, "tools", "novy_projekt.py"), self.p], check=True, capture_output=True)
         lines = gi.read_text(encoding="utf-8").splitlines()
         self.assertIn("vystupy/rodokmen.sqlite", lines)
+        self.assertIn("data/tajne.json", lines)
         self.assertIn("moje/", lines)
         self.assertEqual(lines.count("pracovni/"), 1)
 
