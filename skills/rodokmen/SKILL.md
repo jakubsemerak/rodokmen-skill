@@ -58,7 +58,8 @@ Cíl: znát co nejvíc o 3–4 generacích nazpět, než sáhneš do matrik.
 - Ptej se postupně (ne dotazníkem naráz): výchozí osoba (pro koho rodokmen je – on sám, partner, dítě?), rodiče,
   prarodiče, pradědečci: **jména, rodná příjmení žen, roky a místa narození, sňatky, úmrtí (a kde jsou pohřbeni), řemesla, domy (čísla popisná!)**.
 - Požádej o dokumenty: rodné a oddací listy, domovské listy, parte, fotky (i náhrobků), rodinné kroniky, paměti, staré dopisy,
-  výpisy z MyHeritage/Geni od příbuzných. Ať je dá do `dokumenty/`. Přečti je celé (PDF/fotky) a vytěž.
+  výpisy z MyHeritage/Geni od příbuzných. **Ptej se zvlášť na fotky předků** – portrét na stránce osoby a v mapě je to,
+  co rodinu na webu zaujme nejvíc (`dokumenty.json` → `portret`, viz `reference/data.md`); kde je hledat jinde, `reference/portaly.md` → Fotky. Ať je dá do `dokumenty/`. Přečti je celé (PDF/fotky) a vytěž.
 - Doporuč zeptat se nejstarších žijících příbuzných – teď, dokud to jde. Nabídni seznam otázek.
 - **Příbuzenství ber doslova, jak ho rodina řekla** („pradědeček babičky“ ≠ „otec babičky“) – nikdy ho neopravuj podle
   toho, co se ti hodí do dat. Při nejasnosti se zeptej. Ztotožnění jen podle křestního jména veď jako `prob` s poznámkou.
@@ -184,7 +185,9 @@ Podrobně `reference/web.md`. Ve zkratce:
 2. Nastav `data/web.json`: název, úvod, kontakt a **přihlašovací otázku a odpověď** (web je jen pro rodinu).
 3. Po každé změně dat: `npm run data && npm run build`. Hlášky `POZOR: nefunkční odkaz` oprav hned. Po větším kole
    zkontroluj i texty úvodu ve `web.json` (`uvod`, `zajimavosti_na_uvodu`) – zastarávají.
-4. Před zveřejněním projdi s uživatelem `reference/soukromi.md` (co na webu bude, žijící lidé, hlášky `CITLIVÉ`
+4. Mapa: každou obec z faktů přidej do `mista.json` (`kontrola.py` hlásí chybějící) – z nich se počítá stěhování a cesta
+   předka. K hlavním obcím nabídni fotky obce a kostela (`foto_mista.py`), fotku si před uložením prohlédni.
+5. Před zveřejněním projdi s uživatelem `reference/soukromi.md` (co na webu bude, žijící lidé, hlášky `CITLIVÉ`
    z `kontrola.py`; schválené zapiš do `web.json` → `citlive_schvaleno`).
 
 ## Fáze 5 – Zveřejnění (volitelné, jen se souhlasem)
@@ -239,6 +242,7 @@ a `zdroje/` (výřezy pro web / plné rozlišení), `dokumenty/` (originály od 
 | `vyrez.py`, `ramecek.py`, `overit.py` | výřez zápisu (zlomky stránky), rámeček (zlomky výřezu, `--pozn` poznámka), ověření čtení na dvou polovinách |
 | `zapis.py` | zápis do `data/*.json` a odkazů `r` v `osoby.py` beze změny formátu |
 | `mista.py` | místa pro mapu (OpenStreetMap) |
+| `foto_mista.py` | fotka obce nebo kostela z Wikimedia Commons (s autorem a licencí) do okénka mapy |
 | `napady.py` | náměty na zajímavosti z dat |
 | `kontrola.py` | kontrola dat; hlásí i citlivé údaje na webu a kdy psát příběh |
 | `slusne.py` | brzda proti zablokování archivem (`stav`, `zastav`, `odblokuj`) |
