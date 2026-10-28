@@ -1,5 +1,5 @@
 """Testy nástrojů skillu na ukázkové rodině. Spuštění z kořene repozitáře: python3 -m unittest discover tests"""
-import json, os, re, shutil, subprocess, sys, tempfile, unittest
+import json, os, pathlib, shutil, subprocess, sys, tempfile, unittest
 
 SKILL = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "skills", "rodokmen")
 
@@ -56,8 +56,7 @@ class GedImport(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.mkdtemp()
         shutil.copytree(os.path.join(SKILL, "tools"), os.path.join(self.dir, "tools"))
-        with open(os.path.join(self.dir, "strom.ged"), "w", encoding="utf-8") as f:
-            f.write(GED)
+        pathlib.Path(self.dir, "strom.ged").write_text(GED, encoding="utf-8")
         out = run(self.dir, "ged_import.py", "strom.ged", "Petr Novák", "--osoby")
         self.P = {}
         exec(out, {"P": self.P}, ns := {})
@@ -76,6 +75,93 @@ class GedImport(unittest.TestCase):
         self.assertEqual(self.P[4]["y"], "asi 1850 – před 1910")
         self.assertIn("† před 1910", self.P[4]["f"])
         self.assertIn("švadlena", self.P[5]["f"])   # bez úmrtí, ale sňatek 1880 – nežije
+
+
+class Ukazka(unittest.TestCase):
+    """Každý test dostane vlastní kopii ukázkového projektu (novy_projekt.py --ukazka)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.base = tempfile.mkdtemp()
+        subprocess.run([sys.executable, "-I", os.path.join(SKILL, "tools", "novy_projekt.py"), os.path.join(cls.base, "p"), "--ukazka"],
+                       check=True, capture_output=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.base)
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.p = os.path.join(self.dir, "p")
+        shutil.copytree(os.path.join(self.base, "p"), self.p, ignore=shutil.ignore_patterns("node_modules"))
+
+    def tearDown(self):
+        shutil.rmtree(self.dir)
+
+    def osoby(self, old, new=None, append=""):
+        path = pathlib.Path(self.p, "data", "osoby.py")
+        t = path.read_text(encoding="utf-8")
+        if old:
+            self.assertIn(old, t)
+            t = t.replace(old, new, 1)
+        path.write_text(t + append, encoding="utf-8")
+
+    def export(self):
+        out = run(self.p, "export_web.py")
+        self.assertIn("stěhování", out, out)
+        return out, json.loads(pathlib.Path(self.p, "web", "src", "data", "site.json").read_text(encoding="utf-8"))
+
+    def test_domov_a_stehovani(self):
+        _, s = self.export()
+        self.assertEqual(s["people"]["barbora-mala-1862"]["home"], "Ostřetín")
+        self.assertEqual(s["people"]["jan-novak-1890"]["home"], "Holice")
+        mv = [m for m in s["moves"] if m["src"] == "Ostřetín" and m["dst"] == "Holice" and m["line"] == 8]
+        self.assertEqual(len(mv), 1)
+        self.assertIn("barbora-mala-1862", mv[0]["people"])
+        self.assertFalse([m for m in s["moves"] if m["src"] == m["dst"]])
+        self.assertEqual(s["coords"]["Holice"], [50.0663, 15.9859])
+
+    def test_domov_z_volneho_textu_kdyz_narozeni_bez_obce(self):
+        self.osoby("'f': ['* 1862 Ostřetín čp. 23',", "'f': ['* 1862', 'bydlela v Býšti',")
+        _, s = self.export()
+        self.assertEqual(s["people"]["barbora-mala-1862"]["home"], "Býšť")
+
+    def test_same_retez_a_kruh(self):
+        out, s = self.export_with_same("SAME = {300: 301, 301: 16, 302: 303, 303: 302}\n")
+        self.assertEqual(s["aliases"]["300"], s["aliases"]["301"])
+        self.assertEqual(s["aliases"]["301"], "vaclav-novak-1858")
+        self.assertNotIn("302", s["aliases"])
+        k = run(self.p, "kontrola.py")
+        self.assertIn("302 -> 303 je v kruhu", k)
+        self.assertIn("300 -> 301 je alias dalšího aliasu", k)
+
+    def export_with_same(self, same):
+        self.osoby(None, append="\n" + same)
+        return self.export()
+
+    def test_snatek_rodicu_u_matky_s_otaznikem(self):
+        self.osoby("'n': 'Barbora Malá', 'y': '1862–1930'", "'n': 'Barbora Malá (?)', 'y': '1862–1930'")
+        self.osoby("'× 1884 Holice Barbora Malá', '† 1921 Holice']", "'× 1880 Holice Marie Dvořáková', '× 1884 Holice Barbora Malá', '† 1921 Holice']")
+        _, s = self.export()
+        fam = next(f for f in s["families"].values() if f["child"] == "jan-novak-1890")
+        self.assertEqual(fam["marriage"], ["× 1884 Holice Barbora Malá"])
+
+    def test_kontrola_obec_narozeni_chybi_v_mistech(self):
+        self.osoby("'* 1862 Ostřetín čp. 23'", "'* 1862 Ústí nad Orlicí čp. 23'")
+        k = run(self.p, "kontrola.py")
+        self.assertIn("obec narození „Ústí nad Orlicí“ není v data/mista.json", k)
+        self.assertNotIn("obec narození „Holice", k)
+
+    def test_kontrola_citlive_v_deniku(self):
+        with open(os.path.join(self.p, "data", "research_log.md"), "a", encoding="utf-8") as f:
+            f.write("| 99 | 2026-10-01 | rodina | – | Karel | rozvod 1990, podle rodiny | – |\n")
+        self.assertIn("CITLIVÉ (research_log.md)", run(self.p, "kontrola.py"))
+
+    def test_kontrola_zijici_s_datem(self):
+        self.osoby("'f': ['* 1952 Holice']", "'f': ['* 3. 5. 1952 Holice']")
+        k = run(self.p, "kontrola.py")
+        self.assertIn("ŽIJÍCÍ osoba 2", k)
+        self.assertNotIn("ŽIJÍCÍ osoba 4", k)
 
 
 if __name__ == "__main__":
