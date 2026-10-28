@@ -58,8 +58,18 @@ def main():
             if r not in keys:
                 err.append(f"boční příbuzný '{s.get('n')}' cituje neexistující zápis '{r}'")
     for a, c in SAME.items():
-        if c not in P:
-            err.append(f"SAME: {a} -> {c}, ale osoba {c} neexistuje")
+        seen = {a}
+        while c in SAME and c not in seen:
+            seen.add(c)
+            c = SAME[c]
+        if c in seen:
+            err.append(f"SAME: {a} -> {SAME[a]} je v kruhu (alias vede zase na alias) – web ho vynechá")
+        elif c not in P:
+            err.append(f"SAME: {a} -> {SAME[a]}, ale osoba {c} neexistuje – web alias vynechá")
+        elif P[c].get("n", "").startswith(("otec neuveden", "matka neuvedena")) or P[c].get("n") in ("", "?"):
+            err.append(f"SAME: {a} -> {SAME[a]}, ale osoba {c} je „{P[c].get('n')}“ (neznámý rodič) – web alias vynechá")
+        elif c != SAME[a]:
+            warn.append(f"SAME: {a} -> {SAME[a]} je alias dalšího aliasu – zapiš rovnou {a}: {c}")
     for k in LINES:
         if k not in range(8, 16):
             err.append(f"LINES: rod {k} – rody mají čísla 8 až 15 (pradědečci a prababičky)")

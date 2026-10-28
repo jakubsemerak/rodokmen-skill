@@ -188,7 +188,16 @@ def main():
     P, LINES, SIDE, ISSUES = ns["P"], ns["LINES"], ns["SIDE"], ns["ISSUES"]
     if 1 not in P:
         sys.exit("V data/osoby.py chybí výchozí osoba (číslo 1).")
-    SAME = ns["SAME"]                       # alias Kekulé → kanonické Kekulé (předek v rodokmenu vícekrát)
+    SAME = {}                               # alias Kekulé → kanonické Kekulé (předek v rodokmenu vícekrát)
+    for a, c in ns["SAME"].items():
+        seen = {a}
+        while c in ns["SAME"] and c not in seen:   # řetěz 131 → 130 → 104
+            seen.add(c)
+            c = ns["SAME"][c]
+        if c in seen or c not in P or placeholder(P[c]):
+            print(f"POZOR: SAME {a}: {ns['SAME'][a]} vynechávám – nevede na skutečnou osobu (viz tools/kontrola.py)")
+        else:
+            SAME[a] = c
     cfg = jload("web.json", {})
     login = cfg.get("prihlaseni") or {}
     if "--nasazeni" in sys.argv and not norm_answer(login.get("odpoved", "")) and not login.get("otevreny"):
@@ -244,7 +253,7 @@ def main():
         )
         if aliases_of.get(k):
             for a in aliases_of[k]:
-                people[slugs[k]]["records"] = list(dict.fromkeys(people[slugs[k]]["records"] + [r for r in P[a].get("r", []) if r in recs]))
+                people[slugs[k]]["records"] = list(dict.fromkeys(people[slugs[k]]["records"] + [r for r in P.get(a, {}).get("r", []) if r in recs]))
             people[slugs[k]]["facts"] = [f for f in people[slugs[k]]["facts"] if not f.startswith("TÁŽ OSOBA")]
 
     families = {}
