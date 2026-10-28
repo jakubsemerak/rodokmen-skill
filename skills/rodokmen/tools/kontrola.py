@@ -224,6 +224,25 @@ def main():
         except re.error as ex:
             err.append(f"místo {name}: špatný výraz '{e.get('re')}': {ex}")
 
+    mista_rx = []
+    for e in jload("mista.json", {}).values():
+        try:
+            mista_rx.append(re.compile(e.get("re") or "^$"))
+        except re.error:
+            pass
+    for k, p in P.items():
+        for f in p.get("f", []):
+            m = re.match(r"\*\s*(?:asi\s+|kol\.\s*)?[\d./ ]*\d{4}\s+(.*)", f)
+            slova = []
+            for w in re.split(r"[\s,(]+", m.group(1)) if m else []:
+                if not (w[:1].isupper() or slova and w in ("nad", "pod", "u")):
+                    break
+                slova.append(w)
+            obec = " ".join(slova).removesuffix(" nad").removesuffix(" pod").removesuffix(" u")
+            if obec and not any(rx.search(f) for rx in mista_rx):
+                warn.append(f"osoba {k}: obec narození „{obec}“ není v data/mista.json – mapa ji neukáže "
+                            f"(tools/mista.py pridej \"…\")")
+
     cfg = jload("web.json", {})
     # Chybějící přihlašovací otázku nehlásit pořád – ohlídá ji až nasazení (export_web.py --nasazeni).
     ukazka = ("Rodokmen Novákových", "(ukázka", "vymyšlená rodina", "kovárnu v Holicích čp. 112")
