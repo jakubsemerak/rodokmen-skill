@@ -32,3 +32,15 @@ export const genName = (g) =>
   ['výchozí osoba', 'rodiče', 'prarodiče', 'praprarodiče'][g] ?? `${g}. generace (${'pra'.repeat(g - 1)}rodiče)`;
 
 export const statusClass = (st) => ({ doc: 'st-doc', prob: 'st-prob', fam: 'st-fam', mh: 'st-mh' })[st] ?? 'st-unk';
+
+/** Cesta předka k výchozí osobě po obcích: [[obec, [slugy narozené tam]], …], od nejstaršího. Méně než 2 obce = []. */
+export function routeOf(slug) {
+  const stops = [];
+  for (let s = slug; s; s = people[s].child) {
+    const h = people[s].home;
+    if (!h) continue;
+    if (stops.length && stops.at(-1)[0] === h) stops.at(-1)[1].push(s);
+    else stops.push([h, [s]]);
+  }
+  return stops.length > 1 ? stops : [];
+}

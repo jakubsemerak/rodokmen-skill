@@ -237,6 +237,8 @@ def main():
             family=None, ownFamily=None, path=path,
             side=[dict(name=s["n"], text=s["t"], records=[r for r in s.get("r", []) if r in recs]) for s in SIDE if s["k"] == k],
             docs=[dict(img=d["img"], caption=d["popis"]) for d in docs_cfg if k in d.get("osoby", [])],
+            photo=next((dict(img=d["img"], caption=d["popis"]) for d in docs_cfg if d.get("portret") and k in d.get("osoby", [])
+                        and os.path.exists(os.path.join(VYREZY, d["img"] + ".jpg"))), None),
             children=[slugs[c] for c in [k // 2] + [a // 2 for a in aliases_of.get(k, [])] if k > 1 and c in slugs],
             also=[dict(k=a, rel=relation(a), line=line_of(a), child=slugs.get(a // 2)) for a in aliases_of.get(k, [])],
         )
@@ -302,8 +304,33 @@ def main():
     for p in people.values():
         p["lineSlug"] = next((l["slug"] for l in lines.values() if l["k"] == p["line"]), None)
 
+    mista = jload("mista.json", {})
+    place_rx = [(n, re.compile(e.get("re") or re.escape(n))) for n, e in mista.items() if "lat" in e and not e.get("hypoteza")]
+
+    def home(facts):
+        """Obec, kde osoba žila: první místo z mista.json v narození, jinak ve volném textu (bydliště, řemeslo), sňatku, úmrtí."""
+        for kind in ("*", "", "×", "†"):
+            for f in facts:
+                if (f[:1] if f[:1] in "*×†" else "") != kind:
+                    continue
+                hits = [(m.start(), m.start() - m.end(), n) for n, rx in place_rx for m in [rx.search(f)] if m]
+                if hits:
+                    return min(hits)[2]
+        return None
+
+    for p in people.values():
+        p["home"] = home(p["facts"])
+    moves = {}
+    for p in people.values():
+        for c in p["children"]:
+            src, dst = p["home"], people[c]["home"]
+            if src and dst and src != dst:
+                moves.setdefault((src, dst, p["line"] or 0), []).append(p["slug"])
+    moves = [dict(src=s, dst=d, line=l, people=v) for (s, d, l), v in moves.items()]
+    coords = {n: [mista[n]["lat"], mista[n]["lon"]] for n, _ in place_rx}
+
     places = []
-    for name, e in jload("mista.json", {}).items():
+    for name, e in mista.items():
         if "lat" not in e:
             continue
         rx = re.compile(e.get("re") or re.escape(name))
@@ -316,8 +343,10 @@ def main():
         if not byline:
             continue
         yrs = [int(y) for p in hits for y in re.findall(r"\b1[4-9]\d\d\b", p["y"] or "")]
+        foto = e.get("foto") if e.get("foto") and os.path.exists(os.path.join(VYREZY, e["foto"] + ".jpg")) else None
         places.append(dict(name=name, lat=e["lat"], lon=e["lon"], lines=[dict(k=k, people=v) for k, v in sorted(byline.items())],
-                           years=[min(yrs), max(yrs)] if yrs else None, hypothesis=bool(e.get("hypoteza"))))
+                           years=[min(yrs), max(yrs)] if yrs else None, hypothesis=bool(e.get("hypoteza")),
+                           photo=foto, photoCaption=e.get("foto_popis", "") if foto else ""))
 
     known = [p for p in people.values() if p["k"] > 1]
     stats = dict(ancestors=len(known), documented=sum(p["st"] == "doc" for p in known), records=len(records),
@@ -329,7 +358,7 @@ def main():
     has_story = os.path.exists(os.path.join(DATA, "pribeh.md"))
     public_cfg = {k: v for k, v in cfg.items() if k != "prihlaseni"}
     public_cfg["maPribeh"] = has_story
-    site = dict(config=public_cfg, places=places, root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
+    site = dict(config=public_cfg, places=places, moves=moves, coords=coords, root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
                 families=families, records=records, lines=lines,
                 issues=[dict(title=i, text="") if isinstance(i, str) else dict(title=i[0], text=i[1]) for i in ISSUES], stats=stats, hypotheses=hypotheses,
                 docs=[dict(img=d["img"], caption=d["popis"], people=[slugs[k] for k in d.get("osoby", []) if k in slugs])
@@ -357,7 +386,8 @@ def main():
     for sub, src_dir in (("img", VYREZY), ("zdroje", ZDROJE)):
         dst_dir = os.path.join(WEB, "public", sub)
         os.makedirs(dst_dir, exist_ok=True)
-        for key in list(recs) + [d["img"] for d in docs_cfg] + ([cfg["uvod"]["foto"]] if cfg.get("uvod", {}).get("foto") else []):
+        for key in list(recs) + [d["img"] for d in docs_cfg] + [p["photo"] for p in places if p["photo"]] \
+                + ([cfg["uvod"]["foto"]] if cfg.get("uvod", {}).get("foto") else []):
             src = os.path.join(src_dir, key + ".jpg")
             dst = os.path.join(dst_dir, key + ".jpg")
             if not os.path.exists(src):
@@ -372,7 +402,8 @@ def main():
                 continue
             shutil.copy2(src, dst)
             copied += 1
-    print(f"{len(people)} osob, {len(families)} rodin, {len(records)} zápisů, {len(lines)} rodů, {len(places)} míst; "
+    print(f"{len(people)} osob, {len(families)} rodin, {len(records)} zápisů, {len(lines)} rodů, {len(places)} míst, "
+          f"{len(moves)} stěhování; "
           f"zkopírováno {copied} obrázků; přihlášení {'zapnuté' if gated else 'VYPNUTÉ (web je otevřený)'}")
 
     # odkazy v textech, které nikam nevedou (adresa osoby se změní třeba doplněním roku narození: jan-novak → jan-novak-1798)
