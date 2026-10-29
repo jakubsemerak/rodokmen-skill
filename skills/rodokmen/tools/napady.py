@@ -34,7 +34,7 @@ def event(p, sym):
     """Všechna data události (* × †) z faktů osoby."""
     out = []
     for f in p.get("f", []):
-        if f.strip().startswith(sym):
+        if f.strip().startswith(sym) and not re.match(re.escape(sym) + r"\s*(před|po)\b", f.strip()):
             m = re.search(DATE, f)
             if m:
                 try:

@@ -348,6 +348,13 @@ console.log(r.map((x) => x.status).join(','));
         self.osoby(None, append='RODINA["eva"] = dict(n="Eva Hrubá", y="* 1950", sex="F", otec="jaroslav-hruby", f=["bydlí Lipová 3, tel. 777 123 456"])\n')
         self.assertIn("ŽIJÍCÍ osoba RODINA eva (Eva Hrubá)", run(self.p, "kontrola.py"))
 
+    def test_napady_dlouhovekost_jen_z_presneho_umrti(self):
+        self.osoby(None, append='\nP[998] = dict(n="Ota Starý", st="doc", f=["* 1. 1. 1800", "† před 2. 2. 1907"])'
+                                 '\nP[999] = dict(n="Iva Stará", st="doc", f=["* 1. 1. 1800", "† 2. 2. 1895"])\n')
+        out = run(self.p, "napady.py")
+        self.assertIn("Iva Stará (999) se dožil(a) 95 let", out)
+        self.assertNotIn("Ota Starý (998) se dožil", out)
+
 
 if __name__ == "__main__":
     unittest.main()
