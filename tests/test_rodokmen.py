@@ -218,9 +218,12 @@ class Ukazka(unittest.TestCase):
         self.assertNotIn("mapa.klic", k)
         _, s = self.export()
         self.assertEqual(s["config"]["mapa"], {"podklad": "mapy.cz", "klic": "TESTKLIC"})
+        site = pathlib.Path(self.p, "web", "src", "data", "site.json")
         run(self.p, "export_web.py", env={"MAPY_API_KEY": "ENVKLIC"})
-        s = json.loads(pathlib.Path(self.p, "web", "src", "data", "site.json").read_text(encoding="utf-8"))
-        self.assertEqual(s["config"]["mapa"]["klic"], "ENVKLIC")
+        self.assertEqual(json.loads(site.read_text(encoding="utf-8"))["config"]["mapa"]["klic"], "TESTKLIC")
+        pathlib.Path(self.p, "data", "tajne.json").unlink()
+        run(self.p, "export_web.py", env={"MAPY_API_KEY": "ENVKLIC"})
+        self.assertEqual(json.loads(site.read_text(encoding="utf-8"))["config"]["mapa"]["klic"], "ENVKLIC")
         self.assertNotIn("klic", json.loads(path.read_text(encoding="utf-8"))["mapa"])
 
     def test_tajne_v_gitignore(self):
