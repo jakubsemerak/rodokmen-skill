@@ -101,6 +101,10 @@ Základní smyčka pro každou osobu:
    **Zjevně související výskyt** po cestě (vzácné příjmení rodu, stejný dům, jméno z rodinného vyprávění) zapiš do
    výsledku se snímkem – je to stopa, ne doklad. Když se hledání zasekne, projdi deník právě kvůli takovým stopám.
 7. Spusť `python3 -I tools/kontrola.py` a oprav chyby.
+8. **Promítni nález do textů webu** (vždy, i když nález zapsal pomocník): spusť `python3 -I tools/napady.py`,
+   nový doložený příběh dopiš do `data/zajimavosti.md`, opravené údaje přepiš ve všech zajímavostech, v `data/pribeh.md`
+   a v úvodu `web.json` (`uvod`, `zajimavosti_na_uvodu`). Pak přegeneruj web (`npm run data && npm run build`)
+   a uživateli řekni, které příběhy přibyly nebo se změnily.
 
 Pravidla, která chrání kvalitu:
 - **Než něco ohlásíš jako nové, prohledej** `data/osoby.py`, `data/zaznamy.json` a `data/research_log.md`
