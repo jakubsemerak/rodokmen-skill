@@ -158,7 +158,7 @@ main.full { max-width: none; padding: 0; }
 /* full-screen tree page */
 .tree-stage { position: relative; height: calc(100vh - 110px); overflow: hidden; touch-action: none; cursor: grab; background: var(--bg); }
 .tree-stage:active { cursor: grabbing; }
-.tree-canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.tree-canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; -webkit-user-select: none; user-select: none; }
 .tree-lines { position: absolute; left: 0; top: 0; fill: none; stroke: #b9ab98; stroke-width: 1.5; }
 .tree-lines .mar { stroke: #a08f78; stroke-width: 2; }
 .tree-lines .nop { stroke-dasharray: 4 4; }
