@@ -82,7 +82,8 @@ otisk odpovědi v cookie), nepřihlášenému ukáže přihlašovací stránku s
 1. Uživatel si založí účet na cloudflare.com – udělá sám.
 2. Přihlášení CLI (otevře prohlížeč) – dej uživateli: `! cd web && npx -y wrangler@4.150.0 login`.
 3. Založení projektu (jednou; můžeš spustit sám, když je přihlášený):
-   `cd web && npx -y wrangler@4.150.0 pages project create <název> --production-branch main` → adresa `https://<název>.pages.dev`.
+   `cd web && npx -y wrangler@4.150.0 pages project create <název> --production-branch main --force` → adresa `https://<název>.pages.dev`.
+   `--force` je nutné: bez něj wrangler 4.150 zkusí projekt převést na Workers, selže a nic nezaloží. Další příkazy už bez `--force`.
 4. Nasazení: `cd web && CF_PAGES_PROJECT=<název> npm run nasadit-cloudflare`. Název projektu se čte **jen z proměnné
    prostředí** `CF_PAGES_PROJECT` (Windows PowerShell: `$env:CF_PAGES_PROJECT="<název>"; npm run nasadit-cloudflare`
    nefunguje – `$CF_PAGES_PROJECT` v npm skriptu rozbalí jen bash/zsh; na Windows spusť nasazení z Git Bash).
