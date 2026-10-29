@@ -170,6 +170,7 @@ def login_files(cfg):
     page = (tpl.replace("{{NAZEV}}", html.escape(cfg.get("nazev", "Rodokmen")))
                .replace("{{UVOD}}", html.escape(login.get("uvod", "Tenhle web je jen pro rodinu a příbuzné.")))
                .replace("{{OTAZKA}}", html.escape(login.get("otazka", "Odpověď na rodinnou otázku")))
+               .replace("{{TYP}}", "password" if login.get("skryt") else "text")
                .replace("{{NAPOVEDA}}", hint))
     write(os.path.join(WEB, "public", "prihlaseni.html"), page)
 
@@ -271,7 +272,7 @@ def main():
     cfg = jload("web.json", {})
     heslo = jload("tajne.json", {}).get("heslo")
     if heslo:
-        cfg["prihlaseni"] = {**(cfg.get("prihlaseni") or {}), "odpoved": heslo}
+        cfg["prihlaseni"] = {"skryt": True, **(cfg.get("prihlaseni") or {}), "odpoved": heslo}
     login = cfg.get("prihlaseni") or {}
     if "--nasazeni" in sys.argv and not norm_answer(login.get("odpoved", "")) and not login.get("otevreny"):
         sys.exit("CHYBA: v data/web.json není odpověď na přihlašovací otázku – web by byl otevřený komukoli.\n"

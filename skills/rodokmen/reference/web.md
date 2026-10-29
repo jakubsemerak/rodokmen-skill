@@ -39,6 +39,7 @@ Náhled spouštěj na pozadí a uživateli pošli odkaz. Vzhled si ověř sám (
   skončí chybou; otevřený web jen výslovně přes `"otevreny": true` v `prihlaseni`.
   Místo otázky může být heslo (`"otazka": "Heslo"`). Heslo nebo odpověď, která nemá být v gitu, zapiš do `data/tajne.json`
   jako `{"heslo": "…"}` – má přednost před `prihlaseni.odpoved` a `web.json` ho pak nepotřebuje. Zapisuje ho uživatel sám.
+  Pole se pak zadává skrytě (tečky); u otázky ve `web.json` jen s `"skryt": true` v `prihlaseni`.
   Je to lehká ochrana proti náhodným návštěvníkům, ne bankovní zabezpečení – citlivé věci na web nepatří.
 - `uvod.foto` = klíč obrázku ve `vyrezy/` (ulož přes `vyrez.py`).
 - Fotky: portréty předků (`dokumenty.json` → `portret`) a fotky obcí a kostelů (`mista.json` → `foto`, nástroj `foto_mista.py`).
