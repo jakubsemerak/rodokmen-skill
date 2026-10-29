@@ -1,0 +1,45 @@
+# Nasazení webu na Cloudflare Pages na požádání: GitHub → Actions → „Nasadit web na Cloudflare Pages“ → Run workflow.
+# Nastavení repozitáře (Settings → Secrets and variables → Actions) viz skill reference/web.md.
+name: Nasadit web na Cloudflare Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nasadit-cloudflare
+  cancel-in-progress: false
+
+jobs:
+  nasadit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Tajné hodnoty do data/tajne.json
+        env:
+          HESLO: ${{ secrets.RODOKMEN_HESLO }}
+          MAPY_KLIC: ${{ secrets.MAPY_KLIC }}
+        run: |
+          python3 -c 'import json, os; json.dump({k: v for k, v in (("heslo", os.environ["HESLO"]), ("mapy_klic", os.environ["MAPY_KLIC"])) if v}, open("data/tajne.json", "w"))'
+      - name: Instalace
+        working-directory: web
+        run: npm ci
+      - name: Nasazení
+        working-directory: web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+        run: |
+          test -n "$CF_PAGES_PROJECT" || { echo "Chybí proměnná repozitáře CF_PAGES_PROJECT"; exit 1; }
+          npm run nasadit-cloudflare

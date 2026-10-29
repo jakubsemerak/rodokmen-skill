@@ -90,6 +90,12 @@ otisk odpovědi v cookie), nepřihlášenému ukáže přihlašovací stránku s
    nefunguje – `$CF_PAGES_PROJECT` v npm skriptu rozbalí jen bash/zsh; na Windows spusť nasazení z Git Bash).
    Skript se spouští ve `web/`: wrangler bere složku `functions/` z aktuální složky a nahraje ji vedle `dist/`.
 5. Ověř v anonymním okně, že se ukáže rodinná otázka (jako u Netlify, krok 5).
+6. Nasazení z GitHubu na požádání (volitelné, když je projekt na GitHubu): projekt má `.github/workflows/nasadit-cloudflare.yml`
+   (Actions → „Nasadit web na Cloudflare Pages“ → Run workflow). Uživatel jednou nastaví v repozitáři (Settings → Secrets and
+   variables → Actions): proměnné `CF_PAGES_PROJECT` a `CLOUDFLARE_ACCOUNT_ID`, tajemství `CLOUDFLARE_API_TOKEN` (API token
+   s oprávněním „Cloudflare Pages: Edit“ – založí si ho sám v My Profile → API Tokens), `RODOKMEN_HESLO` a případně `MAPY_KLIC`.
+   Tajné hodnoty zadává uživatel sám, např. `gh secret set RODOKMEN_HESLO` (zeptá se na hodnotu). U klíče Mapy.com pak povol
+   i adresu `https://<název>.pages.dev`.
 Místo rodinné otázky lze použít **Cloudflare Access** (Zero Trust → Access → aplikace pro doménu `*.pages.dev`,
 přihlášení e-mailem s jednorázovým kódem jen pro vyjmenované adresy) – silnější, ale každého příbuzného musí uživatel
 přidat; rodinná otázka pak může zůstat jako druhá vrstva.

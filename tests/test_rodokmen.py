@@ -263,6 +263,15 @@ class Ukazka(unittest.TestCase):
         self.export()
         self.assertIn('type="text"', pathlib.Path(self.p, "web", "public", "prihlaseni.html").read_text(encoding="utf-8"))
 
+    def test_workflow_cloudflare(self):
+        import re
+        wf = pathlib.Path(self.p, ".github", "workflows", "nasadit-cloudflare.yml")
+        text = wf.read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch", text)
+        for line in text.splitlines():   # výrazy ${{ }} jen v env:/with:, nikdy v textu skriptu (injekce)
+            if "${{" in line:
+                self.assertRegex(line, r"^\s+[A-Z_]+: \$\{\{ (secrets|vars)\.[A-Z_]+ \}\}$", line)
+
     @unittest.skipUnless(shutil.which("node"), "chybí node")
     def test_brana_cloudflare_v_node(self):
         import hashlib
