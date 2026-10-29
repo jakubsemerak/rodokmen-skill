@@ -257,6 +257,11 @@ class Ukazka(unittest.TestCase):
         self.assertIn(hashlib.sha256("rodokmen:tajneheslo7".encode()).hexdigest(), mw)
         self.assertNotIn("Tajné", pathlib.Path(self.p, "web", "src", "data", "site.json").read_text(encoding="utf-8"))
         self.assertNotIn("odpověď na přihlašovací otázku", run(self.p, "kontrola.py"))
+        self.assertIn('type="password"', pathlib.Path(self.p, "web", "public", "prihlaseni.html").read_text(encoding="utf-8"))
+
+    def test_otazka_bez_skryti(self):
+        self.export()
+        self.assertIn('type="text"', pathlib.Path(self.p, "web", "public", "prihlaseni.html").read_text(encoding="utf-8"))
 
     @unittest.skipUnless(shutil.which("node"), "chybí node")
     def test_brana_cloudflare_v_node(self):
