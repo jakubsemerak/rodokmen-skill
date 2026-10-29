@@ -150,7 +150,7 @@ def main():
                             f"(tools/mista.py pridej \"…\")")
 
     cfg = jload("web.json", {})
-    if not (cfg.get("prihlaseni") or {}).get("odpoved") and not (cfg.get("prihlaseni") or {}).get("otevreny"):
+    if not ((cfg.get("prihlaseni") or {}).get("odpoved") or jload("tajne.json", {}).get("heslo")) and not (cfg.get("prihlaseni") or {}).get("otevreny"):
         warn.append("web.json: není nastavená odpověď na přihlašovací otázku – nasazení webu skončí chybou")
 
     mapa = cfg.get("mapa") or {}

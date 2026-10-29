@@ -269,10 +269,13 @@ def main():
         else:
             SAME[a] = c
     cfg = jload("web.json", {})
+    heslo = jload("tajne.json", {}).get("heslo")
+    if heslo:
+        cfg["prihlaseni"] = {**(cfg.get("prihlaseni") or {}), "odpoved": heslo}
     login = cfg.get("prihlaseni") or {}
     if "--nasazeni" in sys.argv and not norm_answer(login.get("odpoved", "")) and not login.get("otevreny"):
         sys.exit("CHYBA: v data/web.json není odpověď na přihlašovací otázku – web by byl otevřený komukoli.\n"
-                 "Nastavte prihlaseni.odpoved, nebo (jen když to opravdu chcete) prihlaseni.otevreny: true.")
+                 "Nastavte heslo v data/tajne.json ({\"heslo\": \"…\"}) nebo prihlaseni.odpoved, nebo (jen když to opravdu chcete) prihlaseni.otevreny: true.")
     docs_cfg = jload("dokumenty.json", [])
     recs = {r["key"]: r for r in record_rows()}
 

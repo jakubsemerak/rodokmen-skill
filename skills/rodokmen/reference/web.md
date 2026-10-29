@@ -37,6 +37,8 @@ Náhled spouštěj na pozadí a uživateli pošli odkaz. Vzhled si ověř sám (
   samotná odpověď se nikam neukládá. Krátkou nebo běžnou odpověď (jméno, obec) ale jde z otisku uhádnout zkoušením,
   proto ať ji uživatel nepoužívá jako heslo jinde. Bez odpovědi nasazení (`npm run nasadit`, `nasadit-cloudflare`, `deploy-caprover`)
   skončí chybou; otevřený web jen výslovně přes `"otevreny": true` v `prihlaseni`.
+  Místo otázky může být heslo (`"otazka": "Heslo"`). Heslo nebo odpověď, která nemá být v gitu, zapiš do `data/tajne.json`
+  jako `{"heslo": "…"}` – má přednost před `prihlaseni.odpoved` a `web.json` ho pak nepotřebuje. Zapisuje ho uživatel sám.
   Je to lehká ochrana proti náhodným návštěvníkům, ne bankovní zabezpečení – citlivé věci na web nepatří.
 - `uvod.foto` = klíč obrázku ve `vyrezy/` (ulož přes `vyrez.py`).
 - Fotky: portréty předků (`dokumenty.json` → `portret`) a fotky obcí a kostelů (`mista.json` → `foto`, nástroj `foto_mista.py`).
