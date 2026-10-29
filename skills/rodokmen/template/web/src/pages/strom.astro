@@ -238,12 +238,14 @@ const names = [...new Set(Object.values(nodes).map((p) => p.n))].sort((a, b) => 
         const hasPar = gen[id] > 0 && parentsOf(id).length > 0;
         const hidden = (list: string[]) => list.filter((s) => !vis.has(s)).length;
         const sibs = siblingsOf(id).filter(real), down = downOf(id);
+        const kids = (asParent[id] ?? []).some((key) => fam.get(key)!.ch.some(real));
+        const downLabel = kids ? 'potomci' : down.length !== 1 ? 'partneři' : N[down[0]].sex === 'F' ? 'manželka' : N[down[0]].sex === 'M' ? 'manžel' : 'partner';
         const shownElsewhere = !isOpen('u', id) && parentsOf(id).every((x) => vis.has(x));   // reached from the parents' side
         const up = !hasPar ? '' : shownElsewhere
           ? `<button type="button" class="tc-tog" disabled title="Rodiče jsou vidět přes jinou větev">−</button>`
           : `<button type="button" class="tc-tog" data-t="u" data-id="${esc(id)}" aria-expanded="${isOpen('u', id)}" title="${isOpen('u', id) ? 'Skrýt rodiče' : 'Ukázat rodiče'}">${isOpen('u', id) ? '−' : '▲ ' + ancestors(id).size}</button>`;
         const status = !sibs.length && kek(id) > 1 ? `<span class="none">${p.b === 'done' ? 'bez sourozenců' : p.b === 'partial' ? 'sourozenci: částečně' : 'sourozenci nehledáni'}</span>` : '';
-        const foot = [btn('s', id, 'sourozenci', hidden(sibs), p.b !== 'done'), status, btn('d', id, 'potomci', hidden(down)),
+        const foot = [btn('s', id, 'sourozenci', hidden(sibs), p.b !== 'done'), status, btn('d', id, downLabel, hidden(down)),
           p.nt?.length ? `<button type="button" data-note="${esc(id)}">pozn. ${p.nt.length}</button>` : ''].join('');
         const name = p.u ? `<a href="${esc(p.u)}" draggable="false">${esc(p.n)}</a>` : `<button type="button" class="tc-name" data-info="${esc(id)}">${esc(p.n)}</button>`;
         const map = p.m ? `<a class="tc-map" href="${esc(p.m)}" draggable="false" title="Cesta na mapě" aria-label="Cesta na mapě">⌖</a>` : '';
