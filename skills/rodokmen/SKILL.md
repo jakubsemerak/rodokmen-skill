@@ -186,7 +186,7 @@ Podrobně `reference/pribehy.md`. Tohle rodina na webu čte nejradši – nenech
 Podrobně `reference/web.md`. Ve zkratce:
 1. `cd web && npm install` (jednou), pak `npm run nahled` → http://localhost:4321 – ukaž uživateli. V cloudovém
    prostředí (claude.ai) localhost neuvidí – pošli mu snímky stránek nebo nasaď náhled.
-2. Nastav `data/web.json`: název, úvod, kontakt a **přihlašovací otázku a odpověď** (web je jen pro rodinu).
+2. Nastav `data/web.json`: název, úvod, kontakt a **přihlašovací otázku a odpověď** (web je jen pro rodinu; heslo mimo git do `data/tajne.json` jako `{"heslo": "…"}`).
 3. Po každé změně dat: `npm run data && npm run build`. Hlášky `POZOR: nefunkční odkaz` oprav hned. Po každém nálezu
    (krok 8 výše) zkontroluj i texty úvodu ve `web.json` (`uvod`, `zajimavosti_na_uvodu`) – zastarávají.
 4. Mapa: každou obec z faktů přidej do `mista.json` (`kontrola.py` hlásí chybějící obce narození) – z nich se počítá stěhování a cesta

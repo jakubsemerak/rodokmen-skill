@@ -244,6 +244,20 @@ class Ukazka(unittest.TestCase):
         self.export()
         self.assertFalse(mw.exists())
 
+    def test_heslo_z_tajne(self):
+        import hashlib
+        path = pathlib.Path(self.p, "data", "web.json")
+        cfg = json.loads(path.read_text(encoding="utf-8"))
+        cfg["prihlaseni"]["odpoved"] = ""
+        path.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+        pathlib.Path(self.p, "data", "tajne.json").write_text('{"heslo": "Tajné Heslo 7"}', encoding="utf-8")
+        out = run(self.p, "export_web.py", "--nasazeni")
+        self.assertNotIn("CHYBA", out)
+        mw = pathlib.Path(self.p, "web", "functions", "_middleware.js").read_text(encoding="utf-8")
+        self.assertIn(hashlib.sha256("rodokmen:tajneheslo7".encode()).hexdigest(), mw)
+        self.assertNotIn("Tajné", pathlib.Path(self.p, "web", "src", "data", "site.json").read_text(encoding="utf-8"))
+        self.assertNotIn("odpověď na přihlašovací otázku", run(self.p, "kontrola.py"))
+
     @unittest.skipUnless(shutil.which("node"), "chybí node")
     def test_brana_cloudflare_v_node(self):
         import hashlib
