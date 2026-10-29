@@ -177,7 +177,7 @@ větev. Průběžně aktualizuj `data/STAV.md` („Rozpracováno“), aby šlo k
 
 ## Fáze 3 – Zajímavosti a Příběh hlavního rodu
 Podrobně `reference/pribehy.md`. Tohle rodina na webu čte nejradši – nenechávej to na konec.
-- **Zajímavosti** sbírej **průběžně** do `data/zajimavosti.md` a řekni je uživateli; po každém kole spusť
+- **Zajímavosti** sbírej **průběžně** do `data/zajimavosti.md` a řekni je uživateli; po každém nálezu (nejpozději na konci kola) spusť
   `python3 -I tools/napady.py` (svatby krátce před porodem, rod v jednom domě, dlouhověkost, epidemie…), ověř a napiš.
 - **„Příběh <hlavního rodu>“**: jakmile má hlavní rod ~5 doložených generací, nabídni ho. Koncept napiš **do chatu**
   ke schválení, pak `data/pribeh.md` a ve `web.json` menu, tlačítko a úvod.
