@@ -47,7 +47,7 @@ Náhled spouštěj na pozadí a uživateli pošli odkaz. Vzhled si ověř sám (
 - `mapa.podklad`: `osm` (výchozí, OpenStreetMap bez klíče), `mapy.cz` (základní mapa Mapy.com) nebo `mapy.cz-outdoor`
   (turistická). Pro Mapy.com založ uživatel účet na developer.mapy.com; API klíč zapiš do `data/tajne.json`
   jako `{"mapy_klic": "…"}` (je v `.gitignore`, **nikdy ho necommituj**), případně do proměnné prostředí `MAPY_API_KEY`
-  (má přednost). Starší `mapa.klic` ve `web.json` ještě funguje, ale `web.json` je v gitu – `kontrola.py` upozorní, ať ho
+  (jen když `tajne.json` klíč nemá – proměnná je společná všem projektům). Starší `mapa.klic` ve `web.json` ještě funguje, ale `web.json` je v gitu – `kontrola.py` upozorní, ať ho
   přesuneš. **Klíč je na webu veřejný** (prohlížeč ho posílá s každou dlaždicí) – v účtu Mapy.com ho ať omezí na doménu
   webu (a `localhost` pro náhled). Bez klíče web použije OpenStreetMap a `kontrola.py` upozorní. Klíč nikdy nepiš do kódu webu.
 - `citlive_schvaleno`: seznam úryvků textu, které uživatel na webu schválil (např. `["oběsil se ve stodole"]`) –

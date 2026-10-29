@@ -156,7 +156,7 @@ def main():
     mapa = cfg.get("mapa") or {}
     if mapa.get("podklad", "osm") not in ("osm", "mapy.cz", "mapy.cz-outdoor"):
         warn.append(f"web.json: mapa.podklad „{mapa.get('podklad')}“ neznám – použij osm, mapy.cz nebo mapy.cz-outdoor")
-    elif str(mapa.get("podklad", "")).startswith("mapy.cz") and not (os.environ.get("MAPY_API_KEY") or jload("tajne.json", {}).get("mapy_klic") or mapa.get("klic")):
+    elif str(mapa.get("podklad", "")).startswith("mapy.cz") and not (jload("tajne.json", {}).get("mapy_klic") or os.environ.get("MAPY_API_KEY") or mapa.get("klic")):
         warn.append("web.json: mapa.podklad je mapy.cz, ale chybí API klíč (z developer.mapy.com) – dej ho do data/tajne.json "
                     "jako {\"mapy_klic\": \"…\"} nebo do proměnné MAPY_API_KEY; mapa bude z OpenStreetMap")
     if mapa.get("klic"):
