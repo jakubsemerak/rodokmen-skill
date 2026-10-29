@@ -179,7 +179,7 @@ v 17. století. Zapiš to do `ISSUES`/`archivni_dotazy.md` a jdi na jinou větev
 ## Fáze 3 – Zajímavosti a Příběh hlavního rodu
 Podrobně `reference/pribehy.md`. Tohle je to, co rodina na webu čte nejradši, takže na to nezapomínej a nenechávej to na konec.
 - **Zajímavosti** („fun facts“) sbírej **průběžně**: co najdeš při čtení, hned zapiš do `data/zajimavosti.md`
-  a řekni uživateli. Po každém kole spusť `python3 -I tools/napady.py`. Najde v datech svatby krátce před porodem,
+  a řekni uživateli. Po každém nálezu (nejpozději na konci kola) spusť `python3 -I tools/napady.py`. Najde v datech svatby krátce před porodem,
   rod v jednom domě, sňatky příbuzných, dlouhověkost, epidemie… Ověř a napiš jako krátké příběhy.
 - **„Příběh <hlavního rodu>“** (Příběh Novákových): jakmile má hlavní rod ~5 doložených generací, nabídni ho.
   Koncept napiš **do chatu** ke schválení, pak `data/pribeh.md` a v `web.json` menu, tlačítko a úvod.
