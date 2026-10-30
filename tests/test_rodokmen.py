@@ -201,6 +201,9 @@ class Ukazka(unittest.TestCase):
         with open(os.path.join(self.p, "data", "zmeny.md"), "a", encoding="utf-8") as f:
             f.write("- Opraveno 1932: syn nebyl nemanželský.\n")
         self.assertIn("CITLIVÉ (zmeny.md)", run(self.p, "kontrola.py"))
+        with open(os.path.join(self.p, "data", "zmeny.md"), "a", encoding="utf-8") as f:
+            f.write("- [Nikdo](/osoba/nikdo-neexistuje/)\n")
+        self.assertIn("nefunkční odkaz /osoba/nikdo-neexistuje/ v zmeny.md", self.export()[0])
 
     def test_kontrola_soukrome_v_publikovanem_textu(self):
         self.osoby("'n': 'Barbora Malá', 'y': '1862–1930',", "'n': 'Barbora Malá', 'y': '1862–1930', 'soukrome': ['léčila se v Kosmonosích'],")
