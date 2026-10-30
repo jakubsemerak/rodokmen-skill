@@ -129,7 +129,8 @@ Základní smyčka pro každou osobu:
 7. Spusť `python3 -I tools/kontrola.py` a oprav chyby.
 8. **Promítni nález do textů webu** (vždy, i když nález zapsal pomocník): spusť `python3 -I tools/napady.py`,
    nový doložený příběh dopiš do `data/zajimavosti.md`, opravené údaje přepiš ve všech zajímavostech, v `data/pribeh.md`
-   a v úvodu `web.json` (`uvod`, `zajimavosti_na_uvodu`). Pak přegeneruj web (`npm run data && npm run build`; při více nálezech v jednom kole stačí na konci kola)
+   a v úvodu `web.json` (`uvod`, `zajimavosti_na_uvodu`). Každou opravu dříve zveřejněného údaje (a nové osoby
+   či větve) zapiš i do `data/zmeny.md` – web ji ukáže jako stránku „Změny“. Pak přegeneruj web (`npm run data && npm run build`; při více nálezech v jednom kole stačí na konci kola)
    a uživateli řekni, které příběhy přibyly nebo se změnily.
 
 Pravidla, která chrání kvalitu (naučená na skutečném projektu):

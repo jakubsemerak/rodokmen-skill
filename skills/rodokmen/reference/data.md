@@ -112,6 +112,8 @@ Viz `web.md`.
 - `research_log.md` – tabulka `| # | datum | zdroj | rozsah | hledáno | výsledek | citace |`, nové řádky na konec, i negativní.
   Web ji zobrazuje jako „Výzkumný deník“.
 - `zajimavosti.md` – `## Nadpis` + text, odkazy `[Jméno](/osoba/<slug>/)`.
+- `zmeny.md` – změny a opravy pro rodinu, nejnovější nahoře: `## RRRR-MM-DD` + odrážky „co bylo → co platí a podle čeho“,
+  odkazy `[Jméno](/osoba/<slug>/)`. Web ji ukáže jako „Změny“; když soubor neexistuje, položka menu se skryje.
 - `pribeh.md` – „Příběh <hlavního rodu>“: frontmatter `title`, `lead` + kapitoly `##`; když soubor neexistuje,
   položka menu se skryje. Jak psát: `pribehy.md`.
 - Poznámky pro Clauda v markdownu piš jako `<!-- … -->` – na web nejdou.

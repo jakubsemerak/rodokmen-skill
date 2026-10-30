@@ -206,7 +206,7 @@ def main():
     texty += [(f"přepis {kk}", " ".join(strings(v.get("cs", "")))) for kk, v in prep.items() if isinstance(v, dict)]
     texty += [("dokumenty.json", " ".join(strings(d.get("popis", "")))) for d in jload("dokumenty.json", []) if isinstance(d, dict)]
     texty += [(f"místo {n}", e.get("foto_popis") or "") for n, e in jload("mista.json", {}).items() if isinstance(e, dict)]
-    for f in ("zajimavosti.md", "pribeh.md", "research_log.md", "archivni_dotazy.md"):
+    for f in ("zajimavosti.md", "pribeh.md", "research_log.md", "archivni_dotazy.md", "zmeny.md"):
         if os.path.exists(os.path.join(DATA, f)):
             md = re.sub(r"^.*<!--\s*soukrom[ée]\s*-->.*(?:\n|$)", "", open(os.path.join(DATA, f), encoding="utf-8").read(), flags=re.M)
             md = re.sub(r"<!--.*?-->", "", md, flags=re.S)

@@ -514,6 +514,7 @@ def main():
     has_story = os.path.exists(os.path.join(DATA, "pribeh.md"))
     public_cfg = {k: v for k, v in cfg.items() if k != "prihlaseni"}
     public_cfg["maPribeh"] = has_story
+    public_cfg["maZmeny"] = os.path.exists(os.path.join(DATA, "zmeny.md"))
     klic = jload("tajne.json", {}).get("mapy_klic") or os.environ.get("MAPY_API_KEY")
     if klic:
         public_cfg["mapa"] = {**(cfg.get("mapa") or {}), "klic": klic}
@@ -528,7 +529,7 @@ def main():
         {k: site[k] for k in ("people", "families", "others", "events", "records", "places", "moves", "lines", "root")}, ensure_ascii=False))
     write_db(P, slugs, people, families, events, moves, R, others)
     gen_dir = os.path.join(WEB, "src", "generated")
-    for src, dst in (("archivni_dotazy.md", "dotazy.md"), ("research_log.md", "denik.md"), ("zajimavosti.md", "zajimavosti.md")):
+    for src, dst in (("archivni_dotazy.md", "dotazy.md"), ("research_log.md", "denik.md"), ("zajimavosti.md", "zajimavosti.md"), ("zmeny.md", "zmeny.md")):
         path = os.path.join(DATA, src)
         text = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
         write(os.path.join(gen_dir, dst), strip_comments(re.sub(r"^# .*\n", "", text, count=1)))
