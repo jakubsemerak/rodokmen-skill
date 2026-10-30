@@ -187,6 +187,21 @@ class Ukazka(unittest.TestCase):
         self.assertNotIn("SOUKROMÉ (", k)
         self.assertNotIn("Lipová", k)
 
+    def test_zmeny_na_webu(self):
+        _, s = self.export()
+        self.assertFalse(s["config"]["maZmeny"])
+        with open(os.path.join(self.p, "data", "zmeny.md"), "w", encoding="utf-8") as f:
+            f.write("# Změny\n\n## 2026-10-30\n- Opraveno OPRAVA-XYZ.\n- SOUKROMÁ-OPRAVA <!-- soukromé -->\n")
+        _, s = self.export()
+        self.assertTrue(s["config"]["maZmeny"])
+        zmeny = pathlib.Path(self.p, "web", "src", "generated", "zmeny.md").read_text(encoding="utf-8")
+        self.assertIn("OPRAVA-XYZ", zmeny)
+        self.assertNotIn("SOUKROMÁ-OPRAVA", zmeny)
+        self.assertNotIn("# Změny", zmeny)
+        with open(os.path.join(self.p, "data", "zmeny.md"), "a", encoding="utf-8") as f:
+            f.write("- Opraveno 1932: syn nebyl nemanželský.\n")
+        self.assertIn("CITLIVÉ (zmeny.md)", run(self.p, "kontrola.py"))
+
     def test_kontrola_soukrome_v_publikovanem_textu(self):
         self.osoby("'n': 'Barbora Malá', 'y': '1862–1930',", "'n': 'Barbora Malá', 'y': '1862–1930', 'soukrome': ['léčila se v Kosmonosích'],")
         with open(os.path.join(self.p, "data", "zajimavosti.md"), "a", encoding="utf-8") as f:
