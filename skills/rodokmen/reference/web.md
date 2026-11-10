@@ -141,7 +141,8 @@ Kdo už má web na Cloudflare Pages, pokračuje tady; nový web zakládej na Clo
 otisk odpovědi v cookie), nepřihlášenému ukáže přihlašovací stránku s kódem 401 na původní adrese.
 1. Uživatel si založí účet na cloudflare.com – udělá sám.
 2. Přihlášení CLI (otevře prohlížeč) – dej uživateli: `! cd web && npx -y wrangler@4.150.0 login`.
-3. Založení projektu (jednou; můžeš spustit sám, když je přihlášený):
+3. Jen když projekt na Cloudflare Pages ještě neexistuje (uživatel výslovně chce adresu `*.pages.dev`) – založení
+   (jednou; můžeš spustit sám, když je přihlášený):
    `cd web && npx -y wrangler@4.150.0 pages project create <název> --production-branch main --force` → adresa `https://<název>.pages.dev`.
    `--force` je nutné: bez něj wrangler 4.150 zkusí projekt převést na Workers, selže a nic nezaloží. Další příkazy už bez `--force`.
 4. Nasazení: `cd web && CF_PAGES_PROJECT=<název> npm run nasadit-cloudflare-pages`. Název projektu se čte **jen z proměnné
@@ -149,7 +150,7 @@ otisk odpovědi v cookie), nepřihlášenému ukáže přihlašovací stránku s
    nefunguje – `$CF_PAGES_PROJECT` v npm skriptu rozbalí jen bash/zsh; na Windows spusť nasazení z Git Bash).
    Skript se spouští ve `web/`: wrangler bere složku `functions/` z aktuální složky a nahraje ji vedle `dist/`.
 5. Ověř v anonymním okně, že se ukáže rodinná otázka (jako u Netlify, krok 5).
-6. Nasazení z GitHubu na požádání (volitelné, když je projekt na GitHubu): projekt má `.github/workflows/nasadit-cloudflare.yml`
+6. Nasazení z GitHubu na požádání (volitelné, když je projekt na GitHubu): projekt má `.github/workflows/nasadit-cloudflare-pages.yml`
    (Actions → „Nasadit web na Cloudflare Pages“ → Run workflow). Uživatel jednou nastaví v repozitáři (Settings → Secrets and
    variables → Actions): proměnné `CF_PAGES_PROJECT` a `CLOUDFLARE_ACCOUNT_ID`, tajemství `CLOUDFLARE_API_TOKEN` (API token
    s oprávněním „Cloudflare Pages: Edit“ – založí si ho sám v My Profile → API Tokens), `RODOKMEN_HESLO` a případně `MAPY_KLIC`.
