@@ -189,36 +189,43 @@ LINK = re.compile(r"https://aron\.vychodoceskearchivy\.cz/apu/([0-9a-f-]{36})/da
 
 
 def link(apu, vol, n):
-    # prohlížeč ARON najde stránku jen podle id varianty TILE; s id PUBLISHED otevře vždy první snímek (#18)
+    # prohlížeč ARON najde stránku jen podle id varianty TILE; s id PUBLISHED otevře vždy první snímek
     for dao in vol.get("digitalObjects", []):
         for f in dao["files"]:
             if f["type"] == "TILE" and f["order"] == n:
                 return f"https://aron.vychodoceskearchivy.cz/apu/{apu}/dao/{dao['id']}/file/{f['id']}"
-    sys.exit(f"Snímek {n} ve svazku {apu} není.")
+    bez_snimku(vol, tiles_by_order(vol), n)
 
 
 def fix_links():
     """Přepíše v data/zaznamy.json odkazy na variantu PUBLISHED (do verze 0.10.0) na TILE téhož snímku."""
     path = os.path.join(ROOT, "data", "zaznamy.json")
-    text = open(path, encoding="utf-8").read()
+    if not os.path.exists(path):
+        sys.exit("data/zaznamy.json není – spusť opravit-odkazy z kořene projektu.")
+    text = open(path, encoding="utf-8-sig").read()
     fixed = 0
     for z in json.loads(text):
-        m = LINK.search(z.get("odkaz") or "")
+        m = LINK.search(z.get("odkaz") or "") if isinstance(z, dict) else None
         if not m:
             continue
         apu, dao_id, fid = m.groups()
-        files = [f for d in volume(apu).get("digitalObjects", []) if d["id"] == dao_id for f in d["files"]]
+        try:
+            vol = volume(apu)
+        except (urllib.error.HTTPError, ValueError) + SIT as e:
+            print(f"{z.get('klic')}: svazek {apu} se nepodařilo načíst ({type(e).__name__}) – odkaz nechán")
+            continue
+        files = [f for d in vol.get("digitalObjects", []) if d["id"] == dao_id for f in d["files"]]
         pub = next((f for f in files if f["id"] == fid and f["type"] == "PUBLISHED"), None)
         if not pub:
             continue
         tile = next((f for f in files if f["type"] == "TILE" and f["order"] == pub["order"]), None)
         if not tile:
-            print(f"{z['klic']}: snímek {pub['order']} nemá dlaždice – odkaz nechán")
+            print(f"{z.get('klic')}: snímek {pub['order']} nemá dlaždice – odkaz nechán")
             continue
         text = text.replace(fid, tile["id"])
         fixed += 1
         if z.get("snimek") not in (None, "", pub["order"]):
-            print(f"POZOR {z['klic']}: odkaz vede na snímek {pub['order']}, v zápisu je snímek {z['snimek']}")
+            print(f"POZOR {z.get('klic')}: odkaz vede na snímek {pub['order']}, v zápisu je snímek {z['snimek']}")
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)

@@ -387,6 +387,24 @@ console.log(r.map((x) => x.status).join(','));
         o = {x["id"]: x for x in s["others"]}
         self.assertEqual(o["o:x"]["partners"], ["k16"])
 
+    def test_aron_opravit_odkazy_a_chybejici_snimek(self):
+        apu, dao, pub, tile = ("a" * 8 + "-0000-0000-0000-" + "0" * 12, "d" * 8 + "-0000-0000-0000-" + "0" * 12,
+                               "1" * 8 + "-0000-0000-0000-" + "0" * 12, "2" * 8 + "-0000-0000-0000-" + "0" * 12)
+        cache = pathlib.Path(self.p, "pracovni", ".cache_aron")
+        cache.mkdir(parents=True, exist_ok=True)
+        (cache / f"{apu}.json").write_text(json.dumps({"name": "N 1850", "digitalObjects": [{"id": dao, "files": [
+            {"id": pub, "type": "PUBLISHED", "order": 3}, {"id": tile, "type": "TILE", "order": 3, "referencedFile": "x"}]}]}),
+            encoding="utf-8")
+        path = pathlib.Path(self.p, "data", "zaznamy.json")
+        z = json.loads(path.read_text(encoding="utf-8-sig"))
+        z.append({"klic": "test_aron", "snimek": 3, "odkaz": f"https://aron.vychodoceskearchivy.cz/apu/{apu}/dao/{dao}/file/{pub}"})
+        z.append({"odkaz": "bez klíče"})
+        path.write_text("\ufeff" + json.dumps(z, ensure_ascii=False), encoding="utf-8")
+        out = run(self.p, "aron_img.py", "opravit-odkazy")
+        self.assertIn("opraveno 1 odkazů", out)
+        self.assertIn(tile, path.read_text(encoding="utf-8-sig"))
+        self.assertIn("svazek má snímky 3–3", run(self.p, "aron_img.py", apu, "link", "9"))
+
     def test_export_rodina(self):
         _, s = self.export()
         o = {x["id"]: x for x in s["others"]}
