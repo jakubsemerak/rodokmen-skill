@@ -356,6 +356,15 @@ def main():
                         f"zeptej se uživatele, jestli to tam smí být (reference/soukromi.md); když ano, "
                         f"přidej úryvek textu s tím slovem do web.json „citlive_schvaleno“")
 
+    dotazy = os.path.join(DATA, "archivni_dotazy.md")
+    if os.path.exists(dotazy):   # oddíl = jeden adresát: kam psát a hotový text žádosti (reference/data.md)
+        md = re.sub(r"<!--.*?-->", "", open(dotazy, encoding="utf-8-sig").read(), flags=re.S)
+        for nadpis, telo in re.findall(r"^## +(.+)\n((?:(?!## ).*(?:\n|$))*)", md, flags=re.M):
+            chybi = [f"**{c}:**" for c in ("Adresát", "Vzorový dotaz") if f"**{c}:**" not in telo]
+            if chybi:
+                warn.append(f"archivni_dotazy.md: oddíl „{nadpis.strip()}“ nemá {', '.join(chybi)} – doplň adresu "
+                            f"(ověřenou na webu úřadu) a text žádosti k odeslání (reference/data.md)")
+
     # Žijící lidé: na webu jen jméno a rok narození. Hlídá osoby v P a RODINA (ne boční příbuzné ani volný text).
     osobni = re.compile(r"\b\d{1,2}\.\s*\d{1,2}\.\s*\d{4}|\bč\.\s?p\.|\bčp\.|\b[A-ZÁ-Ž]\w*(?:ská|cká|ova|ní|ého) \d{1,3}(?:/\d+)?[a-z]?\b(?![.\d])|\bul\.|"
                         r"\+\d{3}\s?\d{3}\s?\d{3}\s?\d{3}|\b[2-79]\d{2} \d{3} \d{3}\b|[\w.+-]+@[\w-]+\.\w+|\btel\.")

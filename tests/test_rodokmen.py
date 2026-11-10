@@ -211,6 +211,17 @@ class Ukazka(unittest.TestCase):
             f.write("\n## Babička\nBarbora Malá léčila se v Kosmonosích.\n")
         self.assertIn("SOUKROMÉ (zajimavosti.md): „léčila se v Kosmonosích“ je v osoby.py u osoby 17", run(self.p, "kontrola.py"))
 
+    def test_archivni_dotaz_ma_adresata_a_vzor(self):
+        path = os.path.join(self.p, "data", "archivni_dotazy.md")
+        with open(path, "a", encoding="utf-8") as f:
+            f.write("\n## SOA Zámrsk – sňatek 1883\n- Sňatek Jana Nováka, oddací kniha Holice po 1834.\n")
+        out = run(self.p, "kontrola.py")
+        self.assertIn("archivni_dotazy.md: oddíl „SOA Zámrsk – sňatek 1883“ nemá **Adresát:**, **Vzorový dotaz:**", out)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write("**Adresát:** Státní oblastní archiv v Zámrsku, Zámrsk 1, 565 43 Zámrsk\n\n"
+                    "**Vzorový dotaz:**\n> Dobrý den, prosím o vyhledání sňatku Jana Nováka.\n")
+        self.assertNotIn("archivni_dotazy.md: oddíl", run(self.p, "kontrola.py"))
+
     def test_kontrola_mapy_cz_bez_klice(self):
         path = pathlib.Path(self.p, "data", "web.json")
         cfg = json.loads(path.read_text(encoding="utf-8"))

@@ -129,7 +129,14 @@ Viz `web.md`.
 - Poznámky pro Clauda v markdownu piš jako `<!-- … -->` – na web nejdou.
 - Řádek deníku se soukromým údajem (adresa žijících, citlivé sdělení rodiny) označ na konci `<!-- soukromé -->` –
   na web („Výzkumný deník“) nejde celý řádek, v projektu zůstává.
-- `archivni_dotazy.md`, `udaje_od_rodiny.md` – volný text.
+- `archivni_dotazy.md` – co jde jen v archivu nebo na matričním úřadě; web ho ukáže v „Co hledáme“. Jeden oddíl
+  `## <komu – co>` na adresáta: řádek `**Adresát:**` (úřad, adresa, e-mail, datová schránka – ověřené na webu úřadu,
+  ne z paměti; u matriky mladší než 100 / 75 / 30 let matriční úřad, jinak archiv), odrážky co hledat a proč (osoba,
+  data, svazek, odkaz na řádek deníku) a `**Vzorový dotaz:**` s hotovým textem žádosti jako citace (`> `), který
+  uživatel jen podepíše a odešle. Místo údajů žadatele `[jméno, adresa, e-mail]` – kontakt uživatele do souboru nepiš
+  (jde na web); u mladších zápisů (`matriky.md` → Lhůty) vyznač, že je žadatel přímý příbuzný a přiloží doklady.
+  `kontrola.py` upozorní na oddíl bez adresáta nebo vzoru. Když uživatel dotaz pošle, připiš pod oddíl „Odesláno <datum>“.
+- `udaje_od_rodiny.md` – volný text.
 
 ## Databáze pro dotazy (`vystupy/rodokmen.sqlite`, `web/public/data/rodokmen.json`)
 Každý export (`npm run data`) je vyrobí znovu – ručně je neupravuj, zdrojem jsou soubory v `data/`.
