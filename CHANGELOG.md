@@ -14,8 +14,8 @@ Projekt založený starší verzí Claude sám nabídne aktualizovat (pozná to 
   svazku; `link` u chybějícího snímku řekne, jaké snímky svazek má.
 - Kontrola: předek bez obce na mapě se hlásí jen jednou; alias `SAME` na osobu bez jména je chyba; archivní dotaz
   přijme i `**Adresát**:` a ohlásí i oddíl, jehož nadpis je poslední řádek souboru.
-- GitHub Action pro Cloudflare Pages se jmenuje `nasadit-cloudflare-pages.yml`. Projekt, který má starý
-  `.github/workflows/nasadit-cloudflare.yml`, ho po aktualizaci smaže (nová Action dělá totéž).
+- GitHub Action pro Cloudflare Pages se jmenuje `nasadit-cloudflare-pages.yml`. Má-li projekt starý
+  `.github/workflows/nasadit-cloudflare.yml`, smaž ho po aktualizaci ručně (nová Action dělá totéž; samo se nesmaže).
 
 Známé omezení: fork používá čísla verzí původního repa; vydá-li původní repo vlastní 0.10.2, kontrola verze
 rozdíl nepozná.
