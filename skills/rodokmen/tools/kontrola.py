@@ -255,7 +255,7 @@ def main():
             err.append(f"místo {name}: špatný výraz '{e.get('re')}': {ex}")
 
     mista_rx = []
-    for n, e in jload("mista.json", {}).items():
+    for n, e in mista.items():
         if "lat" not in e or e.get("hypoteza"):   # export je pro domov a stěhování nepoužije
             continue
         try:
@@ -263,6 +263,8 @@ def main():
         except re.error:
             pass
     for k, p in P.items():
+        if k in bez_mista:   # už hlášeno souhrnně výš
+            continue
         for f in p.get("f", []):
             m = re.match(r"\*\s*(?:asi\s+|kol\.\s*)?[\d./ ]*\d{4}\s+(.*)", f)
             slova = []

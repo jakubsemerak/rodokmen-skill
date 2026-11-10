@@ -359,6 +359,13 @@ console.log(r.map((x) => x.status).join(','));
         self.assertIn("obec narození „Ústí nad Orlicí“ není v data/mista.json", k)
         self.assertNotIn("obec narození „Holice", k)
 
+    def test_kontrola_predek_bez_obce_jen_jednou(self):
+        self.osoby("'* 1862 Ostřetín čp. 23', '× 1884 Holice Václav Novák', '† 1930 Holice'",
+                   "'* 1862 Neznámov čp. 23', '× 1884 Neznámov Václav Novák', '† 1930 Neznámov'")
+        k = run(self.p, "kontrola.py")
+        self.assertIn("doložených předků nemá v údajích žádnou obec", k)
+        self.assertNotIn("obec narození „Neznámov“", k)
+
     def test_kontrola_citlive_v_deniku(self):
         with open(os.path.join(self.p, "data", "research_log.md"), "a", encoding="utf-8") as f:
             f.write("| 99 | 2026-10-01 | rodina | – | Karel | rozvod 1990, podle rodiny | – |\n")
