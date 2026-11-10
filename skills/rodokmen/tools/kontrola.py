@@ -109,7 +109,7 @@ def main():
             err.append(f"SAME: {a} -> {SAME[a]} je v kruhu (alias vede zase na alias) – web ho vynechá")
         elif c not in P:
             err.append(f"SAME: {a} -> {SAME[a]}, ale osoba {c} neexistuje – web alias vynechá")
-        elif P[c].get("n", "").startswith(("otec neuveden", "matka neuvedena")) or P[c].get("n") in ("", "?"):
+        elif (P[c].get("n") or "").startswith(("otec neuveden", "matka neuvedena")) or (P[c].get("n") or "") in ("", "?"):
             err.append(f"SAME: {a} -> {SAME[a]}, ale osoba {c} je „{P[c].get('n')}“ (neznámý rodič) – web alias vynechá")
         elif c != SAME[a]:
             warn.append(f"SAME: {a} -> {SAME[a]} je alias dalšího aliasu – zapiš rovnou {a}: {c}")

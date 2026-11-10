@@ -342,6 +342,10 @@ console.log(r.map((x) => x.status).join(','));
         self.assertIn("302 -> 303 je v kruhu", k)
         self.assertIn("300 -> 301 je alias dalšího aliasu", k)
 
+    def test_same_na_osobu_bez_jmena(self):
+        self.osoby(None, append="\nP[400] = {'y': '1700', 'st': 'unk'}\nSAME = {401: 400}\n")
+        self.assertIn("SAME: 401 -> 400, ale osoba 400 je", run(self.p, "kontrola.py"))
+
     def export_with_same(self, same):
         self.osoby(None, append="\n" + same)
         return self.export()
