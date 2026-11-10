@@ -199,7 +199,7 @@ class Ukazka(unittest.TestCase):
         self.assertNotIn("SOUKROMÁ-OPRAVA", zmeny)
         self.assertNotIn("# Změny", zmeny)
         with open(os.path.join(self.p, "data", "zmeny.md"), "a", encoding="utf-8") as f:
-            f.write("- Opraveno 1932: syn nebyl nemanželský.\n")
+            f.write("- Opraveno 1932: syn byl nemanželský.\n")
         self.assertIn("CITLIVÉ (zmeny.md)", run(self.p, "kontrola.py"))
         with open(os.path.join(self.p, "data", "zmeny.md"), "a", encoding="utf-8") as f:
             f.write("- [Nikdo](/osoba/nikdo-neexistuje/)\n")

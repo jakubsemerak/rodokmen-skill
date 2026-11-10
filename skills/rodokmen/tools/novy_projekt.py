@@ -429,12 +429,14 @@ def main():
     for d in ("vyrezy", "zdroje", "dokumenty", "pracovni"):
         os.makedirs(os.path.join(dst, d), exist_ok=True)
     os.makedirs(os.path.join(dst, ".claude"), exist_ok=True)
-    os.makedirs(os.path.join(dst, ".github", "workflows"), exist_ok=True)
     for name in ("CLAUDE.md", ".gitignore", ".gitattributes", "poznamky_pro_skill.md", os.path.join(".claude", "launch.json"),
                  os.path.join(".github", "workflows", "nasadit-cloudflare.yml")):
-        out = os.path.join(dst, name)
+        out, src = os.path.join(dst, name), os.path.join(SKILL, "template", name)
+        if not os.path.exists(src):
+            continue
         if not os.path.lexists(out):
-            copy(os.path.join(SKILL, "template", name), out)
+            os.makedirs(os.path.dirname(out), exist_ok=True)
+            copy(src, out)
         elif name == ".gitignore" and not os.path.islink(out):   # nové položky (třeba soukromá databáze) doplnit i staršímu projektu
             have = set(open(out, encoding="utf-8").read().splitlines())
             new = [l for l in open(os.path.join(SKILL, "template", name), encoding="utf-8").read().splitlines()

@@ -9,6 +9,7 @@ Obec musí být v data/mista.json se souřadnicemi (tools/mista.py) – podle ni
 Fotky z Commons jsou pod licencemi CC/PD: uvedení autora a licence je podmínkou, proto je popis vždy pod fotkou.
 """
 import html, json, math, os, re, subprocess, sys, time, unicodedata, urllib.parse, urllib.request
+import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__))); import slusne  # noqa: E402 – brzda proti zablokování (společný limit dotazů, tools/slusne.py)
 for _s in (sys.stdout, sys.stderr):   # UTF-8 výstup i na Windows bez -X utf8 (cp1250 neumí třeba „→“)
     if hasattr(_s, "reconfigure"):
         _s.reconfigure(encoding="utf-8", errors="replace")
@@ -89,7 +90,7 @@ def candidates(name, pos):
 
 
 def main():
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
         sys.exit(__doc__)
     name = sys.argv[1]
     mista = json.load(open(os.path.join(ROOT, "data", "mista.json"), encoding="utf-8"))
