@@ -6,6 +6,29 @@ dá v repozitáři **Watch → Custom → Releases**.
 
 Projekt založený starší verzí Claude sám nabídne aktualizovat (pozná to podle souboru `VERZE`).
 
+## 0.10.1 – 10. 11. 2026
+
+Verze 0.10.0 doplněná o změny z forku (jakubsemerak/rodokmen-skill).
+
+**Nové**
+- Archivní dotazy (`data/archivni_dotazy.md`, na webu „Co hledáme“): každý oddíl je jeden adresát s adresou ověřenou
+  na jeho webu a hotovým textem žádosti k odeslání. `kontrola.py` upozorní na oddíl bez adresáta nebo vzoru.
+- Stromový graf rodiny `/strom/` z nového `RODINA` v `osoby.py` (sourozenci předků, jejich partneři a děti).
+- Mapa stěhování a cesta předka s časovou osou, portréty na stránce osoby a v mapě, fotky obcí a kostelů
+  z Wikimedia Commons (`foto_mista.py`), volba podkladu mapy (OpenStreetMap, Mapy.com s klíčem).
+- Stránka „Změny“ z `data/zmeny.md` – opravy údajů pro rodinu.
+- Veřejná data `web/public/data/rodokmen.json` a soukromá databáze `vystupy/rodokmen.sqlite` na otázky nad daty.
+- Soukromé údaje: pole `soukrome` u osob a řádky deníku `<!-- soukromé -->` nejdou na web, kontrola hlídá únik.
+- Heslo k webu a klíč Mapy.com mimo git v `data/tajne.json`; heslo se na přihlašovací stránce zadává skrytě.
+- Nasazení na Cloudflare Pages (`npm run nasadit-cloudflare-pages`, adresa `<název>.pages.dev`) i z GitHubu
+  na požádání (`.github/workflows/nasadit-cloudflare.yml`). Výchozí zůstává nasazení na Cloudflare z 0.10.0.
+- `kramerius.py text <PID>` – celý OCR text stránky.
+
+**Opravy**
+- ARON: odkaz na snímek otevře správný snímek (dřív vždy první); staré odkazy opraví `aron_img.py opravit-odkazy`.
+- Aliasy `SAME` v řetězu nebo na neznámého rodiče už neshodí export; sňatek rodičů se najde i u matky bez jména.
+- Kontrola citlivých slov ve všech textech webu a u žijících i adresa, telefon a e-mail.
+
 ## 0.10.0 – 10. 11. 2026
 
 Hlavní novinka: **přepracované návody.** SKILL.md, který Claude čte v každém sezení, je o třetinu kratší – podrobnosti
