@@ -6,6 +6,20 @@ dá v repozitáři **Watch → Custom → Releases**.
 
 Projekt založený starší verzí Claude sám nabídne aktualizovat (pozná to podle souboru `VERZE`).
 
+## 0.10.2 – 10. 11. 2026
+
+**Opravy**
+- `RODINA`: partner zapsaný jako číslo místo seznamu nebo položka, která není `dict(…)`, už neshodí kontrolu ani export.
+- `aron_img.py opravit-odkazy` čte `data/zaznamy.json` i s BOM a nespadne na zápisu bez klíče ani na nedostupném
+  svazku; `link` u chybějícího snímku řekne, jaké snímky svazek má.
+- Kontrola: předek bez obce na mapě se hlásí jen jednou; alias `SAME` na osobu bez jména je chyba; archivní dotaz
+  přijme i `**Adresát**:` a ohlásí i oddíl, jehož nadpis je poslední řádek souboru.
+- GitHub Action pro Cloudflare Pages se jmenuje `nasadit-cloudflare-pages.yml`. Projekt, který má starý
+  `.github/workflows/nasadit-cloudflare.yml`, ho po aktualizaci smaže (nová Action dělá totéž).
+
+Známé omezení: fork používá čísla verzí původního repa; vydá-li původní repo vlastní 0.10.2, kontrola verze
+rozdíl nepozná.
+
 ## 0.10.1 – 10. 11. 2026
 
 Verze 0.10.0 doplněná o změny z forku (jakubsemerak/rodokmen-skill).
