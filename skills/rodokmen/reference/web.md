@@ -14,6 +14,7 @@ a překladem), stránka osoby, rodiny, „Co hledáme“, výzkumný deník, hle
 | `npm run nahled` | data + build + náhled na http://localhost:4321 (Ctrl+C ukončí) |
 | `npm run dev` | vývojový režim při úpravách vzhledu |
 | `npm run nasadit-cloudflare` | data + build + nahrání na Cloudflare (výchozí) + kontrola |
+| `npm run nasadit-cloudflare-pages` | data + build + nahrání na Cloudflare Pages – jen web, který už na `*.pages.dev` běží |
 | `npm run nasadit` | data + build + nahrání na Netlify + kontrola |
 | `npm run overit` | kontrola nasazeného webu bez přihlášení (rodinná otázka × ochrana týmu Netlify / stránka Cloudflare) |
 
@@ -99,8 +100,9 @@ Další aktualizace = jen `npm run nasadit-cloudflare`.
   v dashboardu (pruh nahoře / My Profile), potvrdit odkaz v poště, nasadit znovu (subdoména už zůstane založená).
 - Safari s blokátorem obsahu ukáže místo ověřovací stránky Cloudflare prázdnou stránku 403 – zkus jiný prohlížeč
   (kontrola to pozná).
-- Nepoužívej `wrangler pages project create/deploy` ani „Import a repository“ v administraci – založí jiný typ projektu,
-  případně sám přepíše `astro.config`/`package.json`. Nasazuj jen přes `npm run nasadit-cloudflare`.
+- Nový web nezakládej přes `wrangler pages project create/deploy` ani „Import a repository“ v administraci – založí jiný
+  typ projektu, případně sám přepíše `astro.config`/`package.json`. Nasazuj přes `npm run nasadit-cloudflare`. Výjimka:
+  web, který už běží na Cloudflare Pages (`<název>.pages.dev`), nasazuj dál podle oddílu Cloudflare Pages níže.
 - V cloudovém prostředí (claude.ai), kde se přihlášení přes prohlížeč nevrátí do terminálu, použij Netlify (`login --request`).
 
 ## Zveřejnění na Netlify (druhá možnost)
