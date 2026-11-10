@@ -365,8 +365,8 @@ def main():
     dotazy = os.path.join(DATA, "archivni_dotazy.md")
     if os.path.exists(dotazy):   # oddíl = jeden adresát: kam psát a hotový text žádosti (reference/data.md)
         md = re.sub(r"<!--.*?-->", "", open(dotazy, encoding="utf-8-sig").read(), flags=re.S)
-        for nadpis, telo in re.findall(r"^## +(.+)\n((?:(?!## ).*(?:\n|$))*)", md, flags=re.M):
-            chybi = [f"**{c}:**" for c in ("Adresát", "Vzorový dotaz") if f"**{c}:**" not in telo]
+        for nadpis, telo in re.findall(r"^## +(.+)(?:\n|$)((?:(?!## ).*(?:\n|$))*)", md, flags=re.M):
+            chybi = [f"**{c}:**" for c in ("Adresát", "Vzorový dotaz") if f"**{c}:**" not in telo and f"**{c}**:" not in telo]
             if chybi:
                 warn.append(f"archivni_dotazy.md: oddíl „{nadpis.strip()}“ nemá {', '.join(chybi)} – doplň adresu "
                             f"(ověřenou na webu úřadu) a text žádosti k odeslání (reference/data.md)")

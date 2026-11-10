@@ -221,6 +221,11 @@ class Ukazka(unittest.TestCase):
             f.write("**Adresát:** Státní oblastní archiv v Zámrsku, Zámrsk 1, 565 43 Zámrsk\n\n"
                     "**Vzorový dotaz:**\n> Dobrý den, prosím o vyhledání sňatku Jana Nováka.\n")
         self.assertNotIn("archivni_dotazy.md: oddíl", run(self.p, "kontrola.py"))
+        with open(path, "a", encoding="utf-8") as f:
+            f.write("\n## Matrika Holice\n**Adresát**: Městský úřad Holice\n\n**Vzorový dotaz**:\n> Dobrý den.\n\n## Poslední bez textu")
+        out = run(self.p, "kontrola.py")
+        self.assertNotIn("„Matrika Holice“", out)
+        self.assertIn("oddíl „Poslední bez textu“ nemá", out)
 
     def test_kontrola_mapy_cz_bez_klice(self):
         path = pathlib.Path(self.p, "data", "web.json")
