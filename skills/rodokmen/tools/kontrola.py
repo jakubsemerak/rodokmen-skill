@@ -72,12 +72,16 @@ def main():
         if not (s.get("t") or "").strip():
             warn.append(f"boční příbuzný '{s.get('n')}' nemá text (t) – na webu bude jen jméno")
     R = ns.get("RODINA", {})
-    odkazy = {v for o in R.values() for v in [o.get("otec"), o.get("matka"), *o.get("partner", [])] if isinstance(v, str)}
+    seznam = lambda v: list(v) if isinstance(v, (list, tuple)) else [] if v is None else [v]
+    odkazy = {v for o in R.values() if isinstance(o, dict)
+              for v in [o.get("otec"), o.get("matka"), *seznam(o.get("partner"))] if isinstance(v, str)}
     for oid, o in R.items():
-        kde = f"RODINA '{oid}' ({o.get('n')})"
         if not isinstance(o, dict) or not o.get("n"):
-            err.append(f"{kde}: musí být dict(n=\"jméno\", …)")
+            err.append(f"RODINA '{oid}': musí být dict(n=\"jméno\", …)")
             continue
+        kde = f"RODINA '{oid}' ({o.get('n')})"
+        if o.get("partner") is not None and not isinstance(o.get("partner"), (list, tuple)):
+            err.append(f"{kde}: partner musí být seznam, např. partner=[{o['partner']!r}]")
         if o.get("sex") not in ("M", "F"):
             err.append(f"{kde}: chybí sex=\"M\" nebo \"F\"")
         if o.get("st", "fam") not in ("doc", "prob", "fam", "mh", "unk"):
@@ -88,7 +92,7 @@ def main():
                 err.append(f"{kde}: {pole} {v!r} není v RODINA")
             elif isinstance(v, int) and v < 2:
                 err.append(f"{kde}: {pole} {v} – číslo předka musí být aspoň 2")
-        for v in o.get("partner", []):
+        for v in seznam(o.get("partner")):
             if isinstance(v, str) and v not in R or isinstance(v, int) and v not in P and v not in SAME or not isinstance(v, (str, int)):
                 err.append(f"{kde}: partner {v!r} neexistuje")
         if not (o.get("otec") or o.get("matka") or o.get("partner")) and oid not in odkazy:

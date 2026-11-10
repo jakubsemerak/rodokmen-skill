@@ -378,6 +378,15 @@ console.log(r.map((x) => x.status).join(','));
         self.assertIn("CHYBA: RODINA 'jaroslav-hruby' (Jaroslav Hrubý): otec 'neexistuje' není v RODINA", k)
         self.assertIn("RODINA 'x' (Petr X): partner 999 neexistuje", k)
 
+    def test_rodina_partner_jako_cislo_a_spatna_polozka(self):
+        self.osoby(None, append='RODINA["x"] = dict(n="Petr X", y="1900–1950", sex="M", partner=16)\nRODINA["y"] = "Jan Y"\n')
+        k = run(self.p, "kontrola.py")
+        self.assertIn("RODINA 'x' (Petr X): partner musí být seznam", k)
+        self.assertIn("RODINA 'y'", k)
+        _, s = self.export()
+        o = {x["id"]: x for x in s["others"]}
+        self.assertEqual(o["o:x"]["partners"], ["k16"])
+
     def test_export_rodina(self):
         _, s = self.export()
         o = {x["id"]: x for x in s["others"]}

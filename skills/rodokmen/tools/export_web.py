@@ -388,7 +388,7 @@ def main():
 
     others = [dict(id=f"o:{oid}", name=o["n"], y=o.get("y", ""), years=years(o.get("y")), sex=o.get("sex", ""),
                    st=o.get("st", "fam"), status=STATUS.get(o.get("st", "fam"), ""), father=ref(o.get("otec")), mother=ref(o.get("matka")),
-                   partners=[x for x in map(ref, o.get("partner", [])) if x], facts=o.get("f", []), note=o.get("note", ""),
+                   partners=[x for x in map(ref, o["partner"] if isinstance(o.get("partner"), (list, tuple)) else [o["partner"]] if o.get("partner") is not None else []) if x], facts=o.get("f", []), note=o.get("note", ""),
                    records=[r for r in o.get("r", []) if r in recs]) for oid, o in R.items()]
     for pp in people.values():   # na stránce osoby a rodiny jako příbuzní
         me, k = f"k{pp['k']}", pp["k"]
