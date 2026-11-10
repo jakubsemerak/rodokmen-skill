@@ -11,7 +11,7 @@ Použití: python3 <skill>/tools/novy_projekt.py <cílová složka> [--ukazka] [
 
 Vytvoří: data/ (prázdné kostry nebo ukázka), web/ (Astro web), tools/ (kopie nástrojů),
 vyrezy/, zdroje/, dokumenty/, pracovni/, CLAUDE.md, .gitignore, .gitattributes (konce řádků LF i na Windows)
-a .claude/launch.json (náhled v Claude desktop), .github/workflows/nasadit-cloudflare.yml (nasazení na Cloudflare Pages na požádání). Do .claude/settings.json doplní zákaz přímého curl/wget
+a .claude/launch.json (náhled v Claude desktop), .github/workflows/nasadit-cloudflare-pages.yml (nasazení na Cloudflare Pages na požádání). Do .claude/settings.json doplní zákaz přímého curl/wget
 (stahování z archivů jde přes brzdu tools/slusne.py); ostatní nastavení v souboru nechá beze změny.
 Existující data nepřepisuje.
 Do .skill_sablona/ uloží kopii šablony web/ a tools/, ze které projekt vznikl (patří do gitu s projektem).
@@ -430,15 +430,16 @@ def main():
         os.makedirs(os.path.join(dst, d), exist_ok=True)
     os.makedirs(os.path.join(dst, ".claude"), exist_ok=True)
     for name in ("CLAUDE.md", ".gitignore", ".gitattributes", "poznamky_pro_skill.md", os.path.join(".claude", "launch.json"),
-                 os.path.join(".github", "workflows", "nasadit-cloudflare.yml")):
+                 os.path.join(".github", "workflows", "nasadit-cloudflare-pages.yml")):
         out, src = os.path.join(dst, name), os.path.join(SKILL, "template", name)
         if not os.path.exists(src):
+            print(f"POZOR: šablona skillu nemá {name} – přeskočeno (neúplná instalace skillu?)")
             continue
         if not os.path.lexists(out):
             os.makedirs(os.path.dirname(out), exist_ok=True)
             copy(src, out)
         elif name == ".gitignore" and not os.path.islink(out):   # nové položky (třeba soukromá databáze) doplnit i staršímu projektu
-            have = set(open(out, encoding="utf-8").read().splitlines())
+            have = set(open(out, encoding="utf-8-sig").read().splitlines())
             new = [l for l in open(os.path.join(SKILL, "template", name), encoding="utf-8").read().splitlines()
                    if l.strip() and not l.startswith("#") and l not in have]
             if new:

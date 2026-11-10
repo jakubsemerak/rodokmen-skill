@@ -299,7 +299,8 @@ class Ukazka(unittest.TestCase):
 
     def test_workflow_cloudflare(self):
         import re
-        wf = pathlib.Path(self.p, ".github", "workflows", "nasadit-cloudflare.yml")
+        self.assertFalse(pathlib.Path(self.p, ".github", "workflows", "nasadit-cloudflare.yml").exists())
+        wf = pathlib.Path(self.p, ".github", "workflows", "nasadit-cloudflare-pages.yml")
         text = wf.read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch", text)
         for line in text.splitlines():   # výrazy ${{ }} jen v env:/with:, nikdy v textu skriptu (injekce)

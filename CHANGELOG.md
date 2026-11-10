@@ -21,7 +21,7 @@ Verze 0.10.0 doplněná o změny z forku (jakubsemerak/rodokmen-skill).
 - Soukromé údaje: pole `soukrome` u osob a řádky deníku `<!-- soukromé -->` nejdou na web, kontrola hlídá únik.
 - Heslo k webu a klíč Mapy.com mimo git v `data/tajne.json`; heslo se na přihlašovací stránce zadává skrytě.
 - Nasazení na Cloudflare Pages (`npm run nasadit-cloudflare-pages`, adresa `<název>.pages.dev`) i z GitHubu
-  na požádání (`.github/workflows/nasadit-cloudflare.yml`). Výchozí zůstává nasazení na Cloudflare z 0.10.0.
+  na požádání (`.github/workflows/nasadit-cloudflare-pages.yml`). Výchozí zůstává nasazení na Cloudflare z 0.10.0.
 - `kramerius.py text <PID>` – celý OCR text stránky.
 
 **Opravy**
